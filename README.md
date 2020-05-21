@@ -148,17 +148,15 @@ they want to be able to refer to the model, and know that that reference will
 continue to refer to the same model. Creating a new folder and deprecating the
 old one is preferred over modifying existing models.
 
-### Additional Metadata
+## TVM CLI
 
-If you feel there are other information that would be relevant to other users,
-please add a README.md to the root of the model's folder. You can share in the
-document:
+[TVM](https://github.com/apache/incubator-tvm) is a machine learning compiler
+framework that compiles neutral network models to be executed on different
+hardware back-ends. TVM enables models specified in a wide range of ML
+frameworks to be run on a wide range of hardware devices.
 
-1. Link and description of any script for training
-1. Verbose description of how the training data is obtained and pre-processed
-1. Verbose discussion of bias and limitation in the training data
-1. Guide on how to do transfer learning using this model
-1. Share performance metrics on inference hardware
-1. Share accuracy metrics on well known datasets.
+In this model zoo, a CLI tool has been provided to compile models using TVM.
+This forms part of the validation workflow of the zoo as well as model
+deployment workflow for Autoware.
 
-Do commit any scripts or code you can share in the same folder as the models.
+See [TVM CLI documentation](scripts/tvm_cli/README.md) on how to use the tool.
