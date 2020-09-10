@@ -17,6 +17,7 @@ from tvm.contrib import cc
 from tvm import autotvm
 import tvm
 from os import path
+import pytest
 
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
 OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"
@@ -119,7 +120,7 @@ def generate_config_file(info):
         ))
 
 # This functions compiles the model.
-def compile(info):
+def compile_model(info):
     if info['model_path'].endswith('.onnx'):
         is_onnx = True
     elif info['model_path'].endswith('.pb'):
@@ -208,47 +209,74 @@ def compile(info):
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Compile model and configuration file (TVM)')
-    requiredNamed = parser.add_argument_group('required arguments')
-    requiredNamed.add_argument('--config',
-                               help='Path to .yaml config file (input)',
-                               required=True)
-    requiredNamed.add_argument('--output_path',
-                               help='Path where network module, '
-                                    'network graph and network parameters '
-                                    'will be stored',
-                               required=True)
-    parser.add_argument('--model',
-                        help='Path to .onnx/.pb model file (input)')
-    parser.add_argument('--device_type',
-                        help='User-specified device type',
-                        choices=['kDLCPU', 'kDLGPU', 'kDLCPUPinned',
-                                 'kDLOpenCL', 'kDLVulkan', 'kDLMetal',
-                                 'kDLVPI', 'kDLROCM', 'kDLExtDev'],
-                        default='kDLCPU')
-    parser.add_argument('--device_id',
-                        help='User-specified device ID',
-                        type=int,
-                        default=1)
-    parser.add_argument('--lanes',
-                        help='Number of lanes, default value is 1',
-                        type=int,
-                        default=1)
-    parser.add_argument('--target',
-                        help='Set the compilation target',
-                        choices=['llvm', 'cuda'],
-                        default='llvm')
-    parser.add_argument('--cross_compile',
-                        help='Set to cross compile for ArmV8a with NEON',
-                        action='store_true',
-                        default=False)
-    parser.add_argument('--autotvm_log',
-                        help='Path to an autotvm .log file, can speed up '
-                             'inference')
+    def compile():
+        parser = argparse.ArgumentParser(
+            description='Compile a model using TVM',
+            usage='''tvm_cli compile [<args>]''')
+        requiredNamed = parser.add_argument_group('required arguments')
+        requiredNamed.add_argument('--config',
+                                   help='Path to .yaml config file (input)',
+                                   required=True)
+        requiredNamed.add_argument('--output_path',
+                                   help='Path where network module, '
+                                        'network graph and network parameters '
+                                        'will be stored',
+                                   required=True)
+        parser.add_argument('--model',
+                            help='Path to .onnx/.pb model file (input)')
+        parser.add_argument('--device_type',
+                            help='User-specified device type',
+                            choices=['kDLCPU', 'kDLGPU', 'kDLCPUPinned',
+                                     'kDLOpenCL', 'kDLVulkan', 'kDLMetal',
+                                     'kDLVPI', 'kDLROCM', 'kDLExtDev'],
+                            default='kDLCPU')
+        parser.add_argument('--device_id',
+                            help='User-specified device ID',
+                            type=int,
+                            default=1)
+        parser.add_argument('--lanes',
+                            help='Number of lanes, default value is 1',
+                            type=int,
+                            default=1)
+        parser.add_argument('--target',
+                            help='Set the compilation target',
+                            choices=['llvm', 'cuda'],
+                            default='llvm')
+        parser.add_argument('--cross_compile',
+                            help='Set to cross compile for ArmV8a with NEON',
+                            action='store_true',
+                            default=False)
+        parser.add_argument('--autotvm_log',
+                            help='Path to an autotvm .log file, can speed up '
+                                 'inference')
 
-    # The dictionary 'info' contains all the information provided by the user
-    # and the information found in the .yaml file.
-    info = preprocess(parser.parse_args())
-    compile(info)
-    generate_config_file(info)
+        parsed_args = parser.parse_args(sys.argv[2:])
+
+        # The dictionary 'info' contains all the information provided by the user
+        # and the information found in the .yaml file
+        info = preprocess(parsed_args)
+        compile_model(info)
+        generate_config_file(info)
+
+    def test():
+        parser = argparse.ArgumentParser(
+            description='Launch the validation script',
+            usage='''tvm_cli test [-h]''')
+        parser.parse_args(sys.argv[2:])
+        pytest.main(['-v'])
+
+    parser = argparse.ArgumentParser(
+        description='Compile model and configuration file (TVM)',
+        usage='''<command> [<args>]
+Commands:
+    compile    Compile a model using TVM
+    test       Launch the validation script''')
+    parser.add_argument('command', help='Subcommand to run')
+    parsed_args = parser.parse_args(sys.argv[1:2])
+    if parsed_args.command not in locals():
+        print('Unrecognized command')
+        parser.print_help()
+        exit(1)
+
+    # Invoke method with same name as the argument passed
+    locals()[parsed_args.command]()

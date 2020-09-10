@@ -26,6 +26,7 @@ $ docker run \
     -v ${MODEL_DIR}:${MODEL_DIR} -w ${MODEL_DIR} \
     -u $(id -u ${USER}):$(id -g ${USER}) \
     autoware/model-zoo-tvm-cli:latest \
+        compile \
         --config ${MODEL_DIR}/definition.yaml \
         --output_path ${MODEL_DIR}/example_pipeline/build
 ```
