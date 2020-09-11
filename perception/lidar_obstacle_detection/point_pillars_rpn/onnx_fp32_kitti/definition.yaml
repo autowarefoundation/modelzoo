@@ -1,0 +1,41 @@
+version: 1
+enable_testing: false
+network:
+  filename: ./model_files/rpn.onnx
+  framework: ONNX
+  provenance: https://github.com/k0suke-murakami/kitti_pretrained_point_pillars.git
+  training: Kitti 3D Object detection evaluation 2017 dataset
+  model_license:
+  data_license: Creative Commons BY-NC-SA 3.0
+network_parameters:
+  datatype: float32
+  input_nodes:
+    - name: input.1
+      description:
+      shape:
+        - 1
+        - 64
+        - 496
+        - 432
+  output_nodes:
+    - name: 184
+      description:
+      shape:
+        - 1
+        - 248
+        - 216
+        - 14
+    - name: 185
+      description:
+      shape:
+        - 1
+        - 248
+        - 216
+        - 2
+    - name: 187
+      description:
+      shape:
+        - 1
+        - 248
+        - 216
+        - 4
