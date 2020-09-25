@@ -1,0 +1,34 @@
+version: 1 # integer version number of the definition.yaml format
+enable_testing: # true|false, set to true to enable the automatic testing of this network/model
+network:
+  filename: # relative path to the model file
+  framework: # TensorFlow, TensorFlow Lite, ONNX, ...
+  provenance: # URL to where the base model come from. Modifications should be explained in the description field
+  training: # Is it trained? Fully? On which data? Link to a page that describes this. Make distinction of the training of the upstream base model and additional training by you.
+  model_license: # link or identifier to the license of the model file
+  data_license: # link or identifier to the license of the dataset used during training
+network_parameters:
+  datatype: # The type of of the network float32 or int8
+  input_nodes:
+    - name: # Name of the input node without a tensor specification (:0 is assumed)
+      description: # Brief description of this input node e.g. purpose and expected data format
+      shape: # A list of dimensions. Use -1 for variable sizes, e.g:
+        - 1
+        - -1
+        - -1
+        - 3
+  output_nodes:
+    - name: # Name of the output node without a tensor specification (:0 is assumed)
+      description: # Brief description of this output node. Link to output processing pipeline code or description of how such a pipeline can be written.
+      shape: # A list of dimensions. Use -1 for variable sizes, e.g:
+        - 1
+        - -1
+        - -1
+        - 3
+    - name:
+      description:
+      shape: # A list of dimensions. Use -1 for variable sizes, e.g:
+        - 1
+        - -1
+        - -1
+        - 3
