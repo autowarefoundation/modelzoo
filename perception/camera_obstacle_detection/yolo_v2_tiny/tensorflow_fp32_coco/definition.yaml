@@ -1,0 +1,27 @@
+version: 1
+enable_testing: true
+network:
+  filename: ./model_files/yolo_v2_tiny.pb
+  framework: Tensorflow
+  provenance: ./README.md
+  training: COCO dataset, https://pjreddie.com/darknet/yolov2/
+  model_license:
+  data_license:
+network_parameters:
+  datatype: float32
+  input_nodes:
+    - name: input
+      description: Camera Image RGB
+      shape:
+        - -1
+        - 416
+        - 416
+        - 3
+  output_nodes:
+    - name: output
+      description:
+      shape:
+        - 1
+        - 13
+        - 13
+        - 425
