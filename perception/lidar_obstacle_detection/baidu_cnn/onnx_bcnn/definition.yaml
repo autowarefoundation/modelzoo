@@ -1,0 +1,27 @@
+version: 1
+enable_testing: false
+network:
+  filename: ./model_files/bcnn.onnx
+  framework: ONNX
+  provenance: https://github.com/kosuke55/train_baiducnn
+  training: Nuscenes dataset v1.0-mini
+  model_license:
+  data_license: Creative Commons BY-NC-SA 4.0
+network_parameters:
+  datatype: float32
+  input_nodes:
+    - name: input.1
+      description:
+      shape:
+        - 1
+        - 6
+        - 672
+        - 672
+  output_nodes:
+    - name: 261
+      description:
+      shape:
+        - 1
+        - 12
+        - 672
+        - 672
