@@ -1,0 +1,74 @@
+version: 1
+enable_testing: false
+network:
+  filename: ./model_files/pfe.onnx
+  framework: ONNX
+  provenance: https://github.com/k0suke-murakami/kitti_pretrained_point_pillars.git
+  training: Kitti 3D Object detection evaluation 2017 dataset
+  model_license:
+  data_license: Creative Commons BY-NC-SA 3.0
+network_parameters:
+  datatype: float32
+  input_nodes:
+    - name: pillar_x
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+    - name: pillar_y
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+    - name: pillar_z
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+    - name: pillar_i
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+    - name: num_points_per_pillar
+      description:
+      shape:
+        - 1
+        - 12000
+    - name: x_sub_shaped
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+    - name: y_sub_shaped
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+    - name: mask
+      description:
+      shape:
+        - 1
+        - 1
+        - 12000
+        - 100
+  output_nodes:
+    - name: 174
+      description:
+      shape:
+        - 1
+        - 64
+        - 12000
+        - 1
