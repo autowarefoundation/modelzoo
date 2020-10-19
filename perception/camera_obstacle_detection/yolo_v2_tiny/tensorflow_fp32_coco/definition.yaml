@@ -1,12 +1,12 @@
 version: 1
 enable_testing: true
 network:
-  filename: ./model_files/yolo_v2_tiny.pb
+  filename: ./model_files/yolov2-tiny.pb
   framework: Tensorflow
   provenance: ./README.md
   training: COCO dataset, https://pjreddie.com/darknet/yolov2/
-  model_license:
-  data_license:
+  model_license: Apache-2.0
+  data_license: CC-BY-4.0
 network_parameters:
   datatype: float32
   input_nodes:
