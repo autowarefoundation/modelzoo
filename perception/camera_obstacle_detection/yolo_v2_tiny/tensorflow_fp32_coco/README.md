@@ -14,9 +14,7 @@ was used to produce the final model file.
 
 ## Compile and run the example pipeline
 
-All commands should be run from the root of the model zoo directory. First,
-build the TVM docker image by following instructions in the TVM CLI
-[documentation](../../../../scripts/tvm_cli/README.md).
+All commands should be run from the root of the model zoo directory.
 
 Compile the model by running the TVM CLI script in a docker container.
 
@@ -27,7 +25,7 @@ $ docker run \
     -it --rm \
     -v ${MODEL_DIR}:${MODEL_DIR} -w ${MODEL_DIR} \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    autoware-model-zoo/tvm_cli:local \
+    autoware/model-zoo-tvm-cli:latest \
         --config ${MODEL_DIR}/definition.yaml \
         --output_path ${MODEL_DIR}/example_pipeline/build
 ```
@@ -40,7 +38,7 @@ $ docker run \
     -v ${MODEL_DIR}:${MODEL_DIR} -w ${MODEL_DIR}/example_pipeline/build \
     -u $(id -u ${USER}):$(id -g ${USER}) \
     --entrypoint "" \
-    autoware-model-zoo/tvm_cli:local \
+    autoware/model-zoo-tvm-cli:latest \
     bash -c "cmake .. && make -j"
 ```
 
@@ -67,6 +65,9 @@ $ docker run \
     -v ${MODEL_DIR}:${MODEL_DIR} \
     -w ${MODEL_DIR}/example_pipeline/build \
     --entrypoint "" \
-    autoware-model-zoo/tvm_cli:local \
+    autoware/model-zoo-tvm-cli:latest \
         ./example_pipeline
 ```
+
+For more information about getting the TVM docker image, see the TVM CLI
+[documentation](../../../../scripts/tvm_cli/README.md).
