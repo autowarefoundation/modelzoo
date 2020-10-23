@@ -15,7 +15,7 @@
 
 set -e
 
-TVM_VERSION_TAG="v0.6.1"
+TVM_VERSION_TAG="v0.7"
 TVM_BASE_DIR="/tmp/tvm"
 TVM_BUILD_DIR="${TVM_BASE_DIR}/build"
 TVM_BUILD_CONFIG="${TVM_BUILD_DIR}/config.cmake"
@@ -29,7 +29,8 @@ apt-get update
 apt-get install -y --no-install-recommends \
         ca-certificates ninja-build git python \
         cmake libopenblas-dev g++ llvm-8 llvm-8-dev clang-9 \
-        python3.6 python3.6-dev python3-setuptools python3-pip antlr4
+        python3.6 python3.6-dev python3-setuptools python3-pip antlr4 \
+        build-essential
 
 # link clang-9 to be the default clang
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
@@ -43,7 +44,8 @@ fi
 
 rm -rf /var/lib/apt/lists/*
 python3 -m pip install --upgrade pip
-pip3 install mypy orderedset "antlr4-python3-runtime>=4.7,<4.8"
+pip3 install mypy orderedset "antlr4-python3-runtime>=4.7,<4.8" \
+  psutil xgboost tornado cython
 
 # clone tvm and create build directory
 git clone --branch ${TVM_VERSION_TAG} --recursive \
@@ -72,10 +74,6 @@ popd
 
 # install python extensions
 pushd ${TVM_BASE_DIR}/python
-python3 setup.py install
-popd
-
-pushd ${TVM_BASE_DIR}/topi/python
 python3 setup.py install
 popd
 
