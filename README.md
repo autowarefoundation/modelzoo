@@ -18,6 +18,7 @@ support. To clone the zoo:
 
 ```sh
 $ GIT_LFS_SKIP_SMUDGE=1 git clone https://github.com/autowarefoundation/modelzoo.git
+$ cd modelzoo
 $ git lfs install
 $ git lfs pull
 ```

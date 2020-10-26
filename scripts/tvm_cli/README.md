@@ -5,14 +5,12 @@ A command line tool that compiles neural network models using
 
 ## Usage
 
-Build a docker image that contains all the dependencies and scripts needed to
-run the tool.
+Pull a docker image that contains all the dependencies and scripts needed to run
+the tool. Alternatively, the image can be built locally, see the
+[Building the docker image](#building-the-docker-image) paragraph.
 
 ```bash
-$ # From root of the model zoo repo
-$ docker build -f scripts/tvm_cli/Dockerfile \
-               -t autoware-model-zoo/tvm_cli:local \
-               scripts/tvm_cli
+$ docker pull autoware/model-zoo-tvm-cli
 ```
 
 The CLI can now be invoked as a container
@@ -20,7 +18,7 @@ The CLI can now be invoked as a container
 ```bash
 $ docker run -it --rm -v `pwd`:`pwd` -w `pwd` \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    autoware-model-zoo/tvm_cli:local -h
+    autoware/model-zoo-tvm-cli:latest -h
 ```
 
 To compile a model in the model zoo
@@ -31,7 +29,7 @@ $ docker run \
     -it --rm \
     -v ${MODEL_DIR}:${MODEL_DIR} -w ${MODEL_DIR} \
     -u $(id -u ${USER}):$(id -g ${USER}) \
-    autoware-model-zoo/tvm_cli:local \
+    autoware/model-zoo-tvm-cli:latest \
         --config ${MODEL_DIR}/definition.yaml \
         --output_path <output folder>
 ```
@@ -46,3 +44,16 @@ The output will consist of these file:
   the operators to be used with the TVM runtime
 - `inference_engine_tvm_config.hpp` contains declaration of a structure with
   configuration for the TVM runtime C++ API.
+
+### Building the docker image
+
+Instead of pulling the docker image, it can be built locally.
+
+```bash
+$ # From root of the model zoo repo
+$ docker build -f scripts/tvm_cli/Dockerfile \
+               -t autoware/model-zoo-tvm-cli:local \
+               scripts/tvm_cli
+```
+
+The previous commands are then used with `:local` instead of `:latest`.
