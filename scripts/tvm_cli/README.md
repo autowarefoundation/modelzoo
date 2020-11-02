@@ -8,8 +8,6 @@ A command line tool that compiles neural network models using
 In all the subsequent commands, if CUDA needs to be enabled, the docker image
 must be run with a flag which exposes the gpu, e.g. [--gpus 0] or [--gpus all].
 
-The CLI can now be invoked as a container
-
 ```bash
 $ docker run -it --rm -v `pwd`:`pwd` -w `pwd` \
     -u $(id -u ${USER}):$(id -g ${USER}) \
@@ -41,15 +39,13 @@ The output will consist of these file:
 - `inference_engine_tvm_config.hpp` contains declaration of a structure with
   configuration for the TVM runtime C++ API.
 
-# Validation script
+## Validation script
 
 A testing script is provided. The script automatically detects all the .yaml
 definition files in a user-specified path, executes the compilation of the
 model corresponding to each file, and checks the output afterwards. The test
 corresponding to a certain .yaml file is only executed if the 'enable_testing'
 field is set to true.
-
-## Usage
 
 The tests need to be run inside a container. The user is required to specify
 the folder containing the .yaml files using the -v option. This folder will be
@@ -66,32 +62,24 @@ $ docker run -it --rm \
 The output will contain information regarding which tests were successful and
 which weren't.
 
-# Obtaining/Building the docker image
-
-Pull a docker image that contains all the dependencies and scripts needed to
-run the tool. Alternatively, the image can be built locally.
-
-```bash
-$ docker pull autoware/model-zoo-tvm-cli
-```
+## Building the docker image
 
 Instead of pulling the docker image, it can be built locally.
 
 ```bash
 $ # From root of the model zoo repo
-$ docker build -f scripts/tvm_cli/Dockerfile \
-               -t autoware/model-zoo-tvm-cli:local \
-               scripts/tvm_cli
+$ ./scripts/tvm_cli/build.sh
+...
+Successfully built 547afbbfd193
+Successfully tagged autoware/model-zoo-tvm-cli:local
 ```
 
-If CUDA is needed, the appropriate Dockerfile needs to be used instead.
+The previous commands are then used with `:local` instead of `:latest`. If
+Nvidia drivers are installed on the system, CUDA will be enabled for TVM. The
+script also distinguish between an arm64 and an amd64 system to build the
+appropriate docker image.
 
-```bash
-$ # From root of the model zoo repo
-$ docker build -f scripts/tvm_cli/Dockerfile.cuda \
-               -t autoware/model-zoo-tvm-cli:local \
-               scripts/tvm_cli
-```
-
-If the image is built locally, all the command in the *Usage* sections must be
-run using `:local` instead of `:latest`.
+*Note:* If CUDA is needed, the image must be built locally on a machine with
+Nvidia drivers installed. In all the docker commands shown, if CUDA needs to be
+enabled, the docker image must be run with a flag which exposes the gpu, e.g.
+[--gpus 0] or [--gpus all].

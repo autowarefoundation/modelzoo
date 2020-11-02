@@ -1,0 +1,48 @@
+ARG FROM_ARG
+FROM $FROM_ARG
+
+COPY install_tvm.sh /tmp/install_tvm.sh
+RUN /tmp/install_tvm.sh
+
+# Install dependencies
+RUN apt-get update && \
+    apt-get -y install software-properties-common && \
+    add-apt-repository ppa:ubuntu-toolchain-r/test && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+        python-opencv libopencv-dev build-essential \
+        protobuf-compiler libprotobuf-dev libhdf5-dev wget gfortran-9 && \
+    rm -rf /var/lib/apt/lists/*
+RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 && \
+    update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 1
+RUN pip3 install --upgrade pip setuptools && \
+    pip3 install --upgrade --use-feature=2020-resolver cython protobuf \
+        "numpy<1.19.0" wheel pyyaml jinja2 future pytest && \
+    pip3 install --upgrade --no-deps keras_preprocessing
+
+# build and install onnx
+RUN cd /tmp && \
+    git clone -b v1.7.0 https://github.com/onnx/onnx.git && \
+    cd onnx && \
+    git submodule update --init --recursive && \
+    python3 setup.py install && \
+    rm -rf /tmp/onnx
+
+# install bazel
+RUN cd /tmp && \
+    wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-linux-arm64 && \
+    ln -s /tmp/bazel-3.4.0-linux-arm64 /usr/bin/bazel && \
+    chmod +x /tmp/bazel-3.4.0-linux-arm64 && /tmp/bazel-3.4.0-linux-arm64
+
+# build and install tensorflow
+RUN git clone --depth 1 -b v2.3.0 https://github.com/tensorflow/tensorflow.git \
+        /tmp/tensorflow && \
+    cd /tmp/tensorflow && \
+    yes "" | ./configure && \
+    bazel build --config=noaws --config=monolithic --local_cpu_resources=32 \
+        //tensorflow/tools/pip_package:build_pip_package && \
+    ./bazel-bin/tensorflow/tools/pip_package/build_pip_package \
+        /tmp/tensorflow_pkg && \
+    pip3 install \
+        /tmp/tensorflow_pkg/tensorflow-2.3.0-cp36-cp36m-linux_aarch64.whl && \
+    rm -rf /tmp/tensorflow /tmp/tensorflow_pkg ~/.cache
