@@ -14,6 +14,7 @@ import tvm.relay.testing.tf as tf_testing
 import tvm.relay as relay
 from jinja2 import Environment, FileSystemLoader
 from tvm.contrib import cc
+from tvm import autotvm
 from os import path
 
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
@@ -31,7 +32,9 @@ def preprocess(args):
     info['lanes'] = args.lanes
     info['device_type'] = args.device_type
     info['device_id'] = args.device_id
+    info['target'] = args.target
     info['cross_compile'] = args.cross_compile
+    info['autotvm_log'] = args.autotvm_log
 
     # .yaml file processing
     with open(args.config, 'r') as yml_file:
@@ -48,11 +51,11 @@ def preprocess(args):
         for input_elem in info['input_list']:
             info['input_dict'][str(input_elem['name'])] = input_elem['shape']
         # Get input data type
-        input_data_type = yaml_dict['network_parameters']['datatype']
-        if input_data_type == 'float32':
+        info['input_data_type'] = yaml_dict['network_parameters']['datatype']
+        if info['input_data_type'] == 'float32':
             info['dtype_code'] = 'kDLFloat'
             info['dtype_bits'] = 32
-        elif input_data_type == 'int8':
+        elif info['input_data_type'] == 'int8':
             info['dtype_code'] = 'kDLInt'
             info['dtype_bits'] = 8
         else:
@@ -72,9 +75,10 @@ def preprocess(args):
     if not path.isdir(info['output_path']):
         os.makedirs(info['output_path'])
 
-    # starting from the config file directory, take 4 levels of parent directory
-    # as the namespace in the case of the model zoo these 4 levels correspond to
-    # <task area>/<autonomous driving task>/<model name>/<model variant name>.
+    # Starting from the config file directory, take 4 levels of parent
+    # directory as the namespace in the case of the model zoo these 4 levels
+    # correspond to <task area>/<autonomous driving task>/<model name>/<model
+    # variant name>.
     model_dir = path.abspath(path.dirname(args.config))
     namespaces = model_dir.split(path.sep)
     if len(namespaces) < 4:
@@ -98,9 +102,12 @@ def generate_config_file(info):
     with open(filename, 'w') as fh:
         fh.write(template.render(
             namespace = info['namespace'],
-            network_module_path = path.join('.', OUTPUT_NETWORK_MODULE_FILENAME),
-            network_graph_path = path.join('.', OUTPUT_NETWORK_GRAPH_FILENAME),
-            network_params_path = path.join('.', OUTPUT_NETWORK_PARAM_FILENAME),
+            network_module_path = path.join('.',
+                                            OUTPUT_NETWORK_MODULE_FILENAME),
+            network_graph_path = path.join('.',
+                                           OUTPUT_NETWORK_GRAPH_FILENAME),
+            network_params_path = path.join('.',
+                                            OUTPUT_NETWORK_PARAM_FILENAME),
             tvm_dtype_code = info['dtype_code'],
             tvm_dtype_bits = info['dtype_bits'],
             tvm_dtype_lanes = info['lanes'],
@@ -129,28 +136,46 @@ def compile(info):
             with tf.io.gfile.GFile(info['model_path'], 'rb') as f:
                 graph_def = tf.compat.v1.GraphDef()
                 graph_def.ParseFromString(f.read())
-                tf.import_graph_def(graph_def, name='')
+                input_map = {}
+                for index, (name, shape) in enumerate(info['input_dict'].items()):
+                    tf_new_image = tf.compat.v1.placeholder(
+                        shape=[1 if x == -1 else x for x in shape],
+                        dtype=info['input_data_type'],
+                        name=name)
+                    input_map["input:"+str(index)] = tf_new_image
+                tf.import_graph_def(graph_def,
+                                    name='',
+                                    input_map = input_map)
                 graph_def = sess.graph.as_graph_def()
                 graph_def = tf_testing.ProcessGraphDefParam(graph_def)
-
         input_shape_dict = {'DecodeJpeg/contents': info['input_list']}
         mod, params = relay.frontend.from_tensorflow(graph_def,
-                                                shape=input_shape_dict,
-                                                outputs=info['output_names'])
+                                                     shape=input_shape_dict,
+                                                     outputs=info['output_names'])
         optimization_level = 2
 
     # Set compilation params
-    target = 'llvm'
     if info['cross_compile']:
-        target += ' -target=aarch64-linux-gnu'
+        if info['target'] == 'cuda':
+            raise Exception('cuda cross-compilation not supported yet')
+        info['target'] += ' -target=aarch64-linux-gnu'
+
+    # Transform data layout to what is expected by CUDA hardware, i.e. NCHW
+    if info['target'] == 'cuda':
+      desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
+      seq = tvm.transform.Sequential([relay.transform.RemoveUnusedFunctions(),
+                                      relay.transform.ConvertLayout(desired_layouts)])
+      with tvm.transform.PassContext(opt_level=3):
+          mod = seq(mod)
 
     # Compile model
     # Note opt_level cannot be higher than 2 because of a bug:
     # https://discuss.tvm.ai/t/tvm-0-6-1-compile-yolo-v2-tiny-fail-worked-in-v0-5-2/7244
-    with relay.build_config(opt_level=optimization_level):
-        graph, lib, params = relay.build(mod,
-                                         target=target,
-                                         params=params)
+    with autotvm.apply_history_best(info['autotvm_log']):
+        with relay.build_config(opt_level=optimization_level):
+            graph, lib, params = relay.build(mod,
+                                             target=info['target'],
+                                             params=params)
 
     # Write the compiled model to files
     output_model_path = path.join(info['output_path'],
@@ -209,10 +234,17 @@ if __name__ == '__main__':
                         help='Number of lanes, default value is 1',
                         type=int,
                         default=1)
+    parser.add_argument('--target',
+                        help='Set the compilation target',
+                        choices=['llvm', 'cuda'],
+                        default='llvm')
     parser.add_argument('--cross_compile',
                         help='Set to cross compile for ArmV8a with NEON',
                         action='store_true',
                         default=False)
+    parser.add_argument('--autotvm_log',
+                        help='Path to an autotvm .log file, can speed up '
+                             'inference')
 
     # The dictionary 'info' contains all the information provided by the user
     # and the information found in the .yaml file.

@@ -13,6 +13,18 @@ the tool. Alternatively, the image can be built locally, see the
 $ docker pull autoware/model-zoo-tvm-cli
 ```
 
+If CUDA is needed, the appropriate Dockerfile needs to be used instead:
+
+```bash
+$ # From root of the model zoo repo
+$ docker build -f scripts/tvm_cli/Dockerfile.cuda \
+               -t autoware-model-zoo/tvm_cli:local \
+               scripts/tvm_cli
+```
+
+In all the subsequent commands, if CUDA needs to be enabled, the docker image
+must be run with a flag which exposes the gpu, e.g. [--gpus 0] or [--gpus all].
+
 The CLI can now be invoked as a container
 
 ```bash
