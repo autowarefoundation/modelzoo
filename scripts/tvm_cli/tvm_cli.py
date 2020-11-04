@@ -15,6 +15,7 @@ import tvm.relay as relay
 from jinja2 import Environment, FileSystemLoader
 from tvm.contrib import cc
 from tvm import autotvm
+import tvm
 from os import path
 
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
