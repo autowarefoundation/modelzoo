@@ -1,5 +1,5 @@
 version: 1
-enable_testing: false
+enable_testing: true
 network:
   filename: ./model_files/pfe.onnx
   framework: ONNX
