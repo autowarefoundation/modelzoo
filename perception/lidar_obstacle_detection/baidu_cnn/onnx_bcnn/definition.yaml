@@ -5,7 +5,7 @@ network:
   framework: ONNX
   provenance: https://github.com/kosuke55/train_baiducnn
   training: Nuscenes dataset v1.0-mini
-  model_license:
+  model_license: Apache-2.0
   data_license: Creative Commons BY-NC-SA 4.0
 network_parameters:
   datatype: float32
