@@ -5,7 +5,7 @@ network:
   framework: ONNX
   provenance: https://github.com/k0suke-murakami/kitti_pretrained_point_pillars.git
   training: Kitti 3D Object detection evaluation 2017 dataset
-  model_license: Apache-2
+  model_license: Apache-2.0
   data_license: Creative Commons BY-NC-SA 3.0
 network_parameters:
   datatype: float32
