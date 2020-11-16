@@ -5,23 +5,6 @@ A command line tool that compiles neural network models using
 
 ## Usage
 
-Pull a docker image that contains all the dependencies and scripts needed to run
-the tool. Alternatively, the image can be built locally, see the
-[Building the docker image](#building-the-docker-image) paragraph.
-
-```bash
-$ docker pull autoware/model-zoo-tvm-cli
-```
-
-If CUDA is needed, the appropriate Dockerfile needs to be used instead:
-
-```bash
-$ # From root of the model zoo repo
-$ docker build -f scripts/tvm_cli/Dockerfile.cuda \
-               -t autoware-model-zoo/tvm_cli:local \
-               scripts/tvm_cli
-```
-
 In all the subsequent commands, if CUDA needs to be enabled, the docker image
 must be run with a flag which exposes the gpu, e.g. [--gpus 0] or [--gpus all].
 
@@ -42,22 +25,55 @@ $ docker run \
     -v ${MODEL_DIR}:${MODEL_DIR} -w ${MODEL_DIR} \
     -u $(id -u ${USER}):$(id -g ${USER}) \
     autoware/model-zoo-tvm-cli:latest \
+        compile \
         --config ${MODEL_DIR}/definition.yaml \
         --output_path <output folder>
 ```
 
 The output will consist of these file:
 
-- `deploy_lib.so` contains compiled operators required by the network to be used
+- `deploy_lib.so` contains compiled operators required by the network to be
+  used with the TVM runtime
+- `deploy_param.params` contains trained weights for the network to be used
   with the TVM runtime
-- `deploy_param.params` contains trained weights for the network to be used with
-  the TVM runtime
 - `deploy_graph.json` contains the compute graph defining relationship between
   the operators to be used with the TVM runtime
 - `inference_engine_tvm_config.hpp` contains declaration of a structure with
   configuration for the TVM runtime C++ API.
 
-### Building the docker image
+# Validation script
+
+A testing script is provided. The script automatically detects all the .yaml
+definition files in a user-specified path, executes the compilation of the
+model corresponding to each file, and checks the output afterwards. The test
+corresponding to a certain .yaml file is only executed if the 'enable_testing'
+field is set to true.
+
+## Usage
+
+The tests need to be run inside a container. The user is required to specify
+the folder containing the .yaml files using the -v option. This folder will be
+searched recursively for all the **definition.yaml** files.
+
+```bash
+$ docker run -it --rm \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    -v /abs_path_to/modelzoo/:/tmp \
+    autoware/model-zoo-tvm-cli:latest \
+    test
+```
+
+The output will contain information regarding which tests were successful and
+which weren't.
+
+# Obtaining/Building the docker image
+
+Pull a docker image that contains all the dependencies and scripts needed to
+run the tool. Alternatively, the image can be built locally.
+
+```bash
+$ docker pull autoware/model-zoo-tvm-cli
+```
 
 Instead of pulling the docker image, it can be built locally.
 
@@ -68,4 +84,14 @@ $ docker build -f scripts/tvm_cli/Dockerfile \
                scripts/tvm_cli
 ```
 
-The previous commands are then used with `:local` instead of `:latest`.
+If CUDA is needed, the appropriate Dockerfile needs to be used instead.
+
+```bash
+$ # From root of the model zoo repo
+$ docker build -f scripts/tvm_cli/Dockerfile.cuda \
+               -t autoware/model-zoo-tvm-cli:local \
+               scripts/tvm_cli
+```
+
+If the image is built locally, all the command in the *Usage* sections must be
+run using `:local` instead of `:latest`.
