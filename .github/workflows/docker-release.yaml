@@ -1,0 +1,82 @@
+name: Docker release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+
+  get-tag:
+
+    if: github.repository_owner == 'autowarefoundation'
+
+    runs-on: ubuntu-latest
+    outputs:
+      tag_ref: ${{ steps.get_tag.outputs.tag_ref }}
+
+    steps:
+      - name: Get tag
+        id: get_tag
+        run: |
+          TAG_REF=${{ github.ref }}
+          TAG_REF=`echo $TAG_REF | cut -c11-`
+          echo ::set-output name=tag_ref::$TAG_REF
+      - name: Echo tag
+        run: echo ${{ steps.get_tag.outputs.tag_ref }}
+
+  build-push-docker:
+      needs: get-tag
+
+      if: github.repository_owner == 'autowarefoundation'
+
+      runs-on: ubuntu-latest
+      env:
+        IMAGE_NAME: autoware/model-zoo-tvm-cli
+        TAG_NAME: ${{ needs.get-tag.outputs.tag_ref }}
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: amd64 image build
+          run: |
+            docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+            # Build image
+            ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME"
+
+        - name: amd64 image push
+          run: |
+            # Push images to docker hub space
+            docker tag $IMAGE_NAME:$TAG_NAME $IMAGE_NAME:latest
+            docker push $IMAGE_NAME:$TAG_NAME
+            docker push $IMAGE_NAME:latest
+
+  build-push-docker-cuda:
+      needs: get-tag
+
+      if: github.repository_owner == 'autowarefoundation'
+
+      runs-on: ubuntu-latest
+      env:
+        IMAGE_NAME: autoware/model-zoo-tvm-cli
+        TAG_NAME: ${{ needs.get-tag.outputs.tag_ref }}-cuda
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: amd64 image build with cuda
+          run: |
+            docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+            # Build image
+            ./scripts/tvm_cli/build.sh -c -i "$IMAGE_NAME" -t "$TAG_NAME"
+
+        - name: amd64 cuda image push
+          run: |
+            # Push images to docker hub space
+            docker tag $IMAGE_NAME:$TAG_NAME $IMAGE_NAME:latest-cuda
+            docker push $IMAGE_NAME:$TAG_NAME
+            docker push $IMAGE_NAME:latest-cuda
