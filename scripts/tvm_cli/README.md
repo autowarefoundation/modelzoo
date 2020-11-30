@@ -14,7 +14,7 @@ $ docker run -it --rm -v `pwd`:`pwd` -w `pwd` \
     autoware/model-zoo-tvm-cli:latest -h
 ```
 
-To compile a model in the model zoo
+### Compiling a model in the model zoo
 
 ```bash
 $ export MODEL_DIR=<path to the folder containing definition.yaml>
@@ -38,6 +38,26 @@ The output will consist of these file:
   the operators to be used with the TVM runtime
 - `inference_engine_tvm_config.hpp` contains declaration of a structure with
   configuration for the TVM runtime C++ API.
+
+### Tuning a model in the model zoo
+
+```bash
+$ export MODEL_DIR=<path to the folder containing definition.yaml and \
+                    AutoTVM_config.py>
+$ docker run \
+    -it --rm \
+    -v ${MODEL_DIR}:${MODEL_DIR} -w ${MODEL_DIR} \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    autoware/model-zoo-tvm-cli:latest \
+        tune \
+        --config ${MODEL_DIR}/definition.yaml \
+        --output_path <output folder> \
+        --autotvm_config ${MODEL_DIR}/AutoTVM_config.py
+```
+
+The output will consist of a .log file whose name can be specified in the
+AutoTVM_config.py file. An example of this file is provided in
+`/modelzoo/AutoTVM_config_example.py`
 
 ## Validation script
 
