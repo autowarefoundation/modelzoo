@@ -64,7 +64,20 @@ which weren't.
 
 ## Building the docker image
 
-Instead of pulling the docker image, it can be built locally.
+Instead of pulling the docker image, it can be built locally using the
+`build.sh` script:
+
+```bash
+Usage: ./scripts/tvm_cli/build.sh [OPTIONS]
+    -c,--cuda              Build TVM cli with cuda enabled.
+    -h,--help              Display the usage and exit.
+    -i,--image-name <name> Set docker images name.
+                           Default: autoware/model-zoo-tvm-cli
+    -t,--tag <tag>         Tag use for the docker images.
+                           Default: local
+```
+
+Here an example to build the image with default parameters:
 
 ```bash
 $ # From root of the model zoo repo
@@ -79,7 +92,7 @@ Nvidia drivers are installed on the system, CUDA will be enabled for TVM. The
 script also distinguish between an arm64 and an amd64 system to build the
 appropriate docker image.
 
-*Note:* If CUDA is needed, the image must be built locally on a machine with
-Nvidia drivers installed. In all the docker commands shown, if CUDA needs to be
-enabled, the docker image must be run with a flag which exposes the gpu, e.g.
+*Note:* If CUDA is needed, the `build.sh` script must be invoked with the `-c`
+argument. In all the docker commands shown, if CUDA needs to be enabled, the
+docker image must be run with a flag which exposes the gpu, e.g.
 [--gpus 0] or [--gpus all].
