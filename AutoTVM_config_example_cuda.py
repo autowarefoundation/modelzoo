@@ -18,6 +18,5 @@ tuning_options = {
                                    repeat=3,
                                    timeout=4,
                                    min_repeat_ms=150),
-    ),
-    'use_transfer_learning': False
+    )
 }
