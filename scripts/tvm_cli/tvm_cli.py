@@ -9,7 +9,6 @@ import os
 import sys
 import onnx
 import yaml
-import tensorflow as tf
 import tvm.relay.testing.tf as tf_testing
 import tvm.relay as relay
 from jinja2 import Environment, FileSystemLoader
@@ -18,6 +17,7 @@ from tvm import autotvm
 import tvm
 from os import path
 import pytest
+import tensorflow as tf
 
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
 OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"

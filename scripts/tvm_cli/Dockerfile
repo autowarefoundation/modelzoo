@@ -1,13 +1,5 @@
-FROM ubuntu:18.04
-
-COPY install_tvm.sh /tmp/install_tvm.sh
-RUN /tmp/install_tvm.sh
-
-RUN pip3 install --upgrade pip && pip3 install onnx tensorflow pyyaml jinja2 \
-    pytest --use-feature=2020-resolver
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
-    apt-get install -y --no-install-recommends \
-    python-opencv libopencv-dev build-essential && rm -rf /var/lib/apt/lists/*
+ARG FROM_ARG
+FROM $FROM_ARG
 
 ENV HOME=/tmp
 WORKDIR /tmp
