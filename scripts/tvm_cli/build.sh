@@ -17,9 +17,11 @@ set -e
 
 IMAGE_NAME="autoware/model-zoo-tvm-cli"
 TAG_NAME="local"
+FROM_ARG="ubuntu:18.04"
 
 function usage() {
     echo "Usage: $0 [OPTIONS]"
+    echo "    -c,--cuda              Build TVM cli with cuda enabled."
     echo "    -h,--help              Display the usage and exit."
     echo "    -i,--image-name <name> Set docker images name."
     echo "                           Default: $IMAGE_NAME"
@@ -28,13 +30,17 @@ function usage() {
     echo ""
 }
 
-OPTS=$(getopt --options hi:t: \
-         --long help,image-name:,tag: \
+OPTS=$(getopt --options chi:t: \
+         --long cuda,help,image-name:,tag: \
          --name "$0" -- "$@")
 eval set -- "$OPTS"
 
 while true; do
   case $1 in
+    -c|--cuda)
+      FROM_ARG="nvidia/cuda:10.1-devel-ubuntu18.04"
+      shift 1
+      ;;
     -h|--help)
       usage
       exit 0
@@ -63,11 +69,6 @@ while true; do
 done
 
 SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
-
-FROM_ARG="ubuntu:18.04"
-if [[ -d "/proc/driver/nvidia" ]]; then
-    FROM_ARG="nvidia/cuda:10.1-devel-ubuntu18.04"
-fi
 
 DOCKER_FILE="Dockerfile.dependencies.arm64"
 if [[ $(uname -a) == *"x86_64"* ]]; then
