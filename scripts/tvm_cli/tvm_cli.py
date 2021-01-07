@@ -254,16 +254,22 @@ if __name__ == '__main__':
 
         # The dictionary 'info' contains all the information provided by the user
         # and the information found in the .yaml file
-        info = preprocess(parsed_args)
-        compile_model(info)
-        generate_config_file(info)
+        try:
+            info = preprocess(parsed_args)
+            compile_model(info)
+            generate_config_file(info)
+        except Exception as e:
+            print('Exception: '+ str(e))
+            return 1
+
+        return 0
 
     def test():
         parser = argparse.ArgumentParser(
             description='Launch the validation script',
             usage='''tvm_cli test [-h]''')
         parser.parse_args(sys.argv[2:])
-        pytest.main(['-v'])
+        return pytest.main(['-v'])
 
     parser = argparse.ArgumentParser(
         description='Compile model and configuration file (TVM)',
@@ -279,4 +285,4 @@ Commands:
         exit(1)
 
     # Invoke method with same name as the argument passed
-    locals()[parsed_args.command]()
+    exit(locals()[parsed_args.command]())
