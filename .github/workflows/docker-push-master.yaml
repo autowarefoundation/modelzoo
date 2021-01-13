@@ -1,0 +1,60 @@
+name: Docker push on master
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'scripts/tvm_cli/**'
+
+jobs:
+
+  build-push-docker:
+
+      if: github.repository_owner == 'autowarefoundation'
+
+      runs-on: ubuntu-latest
+      env:
+        IMAGE_NAME: autoware/model-zoo-tvm-cli
+        TAG_NAME: bleedingedge
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: amd64 image build
+          run: |
+            docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+            # Build image
+            ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME"
+
+        - name: amd64 image push
+          run: |
+            # Push images to docker hub space
+            docker push $IMAGE_NAME:$TAG_NAME
+
+  build-push-docker-cuda:
+
+      if: github.repository_owner == 'autowarefoundation'
+
+      runs-on: ubuntu-latest
+      env:
+        IMAGE_NAME: autoware/model-zoo-tvm-cli
+        TAG_NAME: bleedingedge-cuda
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: amd64 image build with cuda
+          run: |
+            docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+            # Build image
+            ./scripts/tvm_cli/build.sh -c -i "$IMAGE_NAME" -t "$TAG_NAME"
+
+        - name: amd64 cuda image push
+          run: |
+            # Push images to docker hub space
+            docker push $IMAGE_NAME:$TAG_NAME

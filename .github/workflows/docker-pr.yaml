@@ -1,0 +1,62 @@
+name: Docker pull requests
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tvm_cli/**'
+
+jobs:
+
+  dockerfile-lint:
+
+    runs-on: ubuntu-latest
+
+    container:
+      image: hadolint/hadolint:latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Linting
+        run: |
+          hadolint scripts/tvm_cli/Dockerfile
+          hadolint scripts/tvm_cli/Dockerfile.dependencies.amd64
+          hadolint scripts/tvm_cli/Dockerfile.dependencies.arm64
+
+  build-docker:
+      needs: dockerfile-lint
+
+      runs-on: ubuntu-latest
+      env:
+        IMAGE_NAME: autoware/model-zoo-tvm-cli
+        TAG_NAME: local
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: amd64 image build
+          run: |
+            # Build image
+            ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME"
+
+  build-docker-cuda:
+      needs: dockerfile-lint
+
+      runs-on: ubuntu-latest
+      env:
+        IMAGE_NAME: autoware/model-zoo-tvm-cli
+        TAG_NAME: local-cuda
+
+      steps:
+
+        - name: Checkout
+          uses: actions/checkout@v2
+
+        - name: amd64 image build with cuda
+          run: |
+            # Build image
+            ./scripts/tvm_cli/build.sh -c -i "$IMAGE_NAME" -t "$TAG_NAME"
