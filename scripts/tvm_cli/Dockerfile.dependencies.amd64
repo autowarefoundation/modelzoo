@@ -7,12 +7,12 @@ RUN /tmp/install_tvm.sh
 
 # hadolint ignore=DL3013
 RUN pip3 install --no-cache-dir --upgrade pip && \
-    pip3 install --no-cache-dir --use-feature=2020-resolver \
+    pip3 install --no-cache-dir \
       jinja2 \
       onnx \
       pytest \
       pyyaml \
-      tensorflow
+      "tensorflow==2.3.1"
 
 # hadolint ignore=DL3008
 RUN apt-get update && \

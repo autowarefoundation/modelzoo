@@ -34,7 +34,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 && 
 RUN pip3 install --upgrade --no-cache-dir \
       pip \
       setuptools && \
-    pip3 install --upgrade --no-cache-dir --use-feature=2020-resolver \
+    pip3 install --upgrade --no-cache-dir \
       "numpy<1.19.0" \
       cython \
       future \
@@ -44,7 +44,6 @@ RUN pip3 install --upgrade --no-cache-dir \
       pyyaml \
       wheel && \
     pip3 install --upgrade --no-cache-dir --no-deps keras_preprocessing
-
 
 # build and install onnx
 WORKDIR /tmp
