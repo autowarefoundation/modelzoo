@@ -1,4 +1,5 @@
 ARG FROM_ARG
+# hadolint ignore=DL3006
 FROM $FROM_ARG
 
 ENV HOME=/tmp
