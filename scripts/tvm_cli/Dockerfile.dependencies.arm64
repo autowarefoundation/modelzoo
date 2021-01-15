@@ -1,48 +1,78 @@
 ARG FROM_ARG
+# hadolint ignore=DL3006
 FROM $FROM_ARG
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 COPY install_tvm.sh /tmp/install_tvm.sh
 RUN /tmp/install_tvm.sh
 
 # Install dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && \
-    apt-get -y install software-properties-common && \
-    add-apt-repository ppa:ubuntu-toolchain-r/test && \
+    apt-get -y install --no-install-recommends software-properties-common && \
+    rm -rf /var/lib/apt/lists/*
+
+# hadolint ignore=DL3008
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        python-opencv libopencv-dev build-essential \
-        protobuf-compiler libprotobuf-dev libhdf5-dev wget gfortran-9 && \
+        build-essential \
+        gfortran-9 \
+        libhdf5-dev \
+        libopencv-dev \
+        libprotobuf-dev \
+        protobuf-compiler \
+        python-opencv \
+        wget && \
     rm -rf /var/lib/apt/lists/*
+
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 && \
     update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 1
-RUN pip3 install --upgrade pip setuptools && \
-    pip3 install --upgrade --use-feature=2020-resolver cython protobuf \
-        "numpy<1.19.0" wheel pyyaml jinja2 future pytest && \
-    pip3 install --upgrade --no-deps keras_preprocessing
+
+# hadolint ignore=DL3013
+RUN pip3 install --upgrade --no-cache-dir \
+      pip \
+      setuptools && \
+    pip3 install --upgrade --no-cache-dir --use-feature=2020-resolver \
+      "numpy<1.19.0" \
+      cython \
+      future \
+      jinja2 \
+      protobuf \
+      pytest \
+      pyyaml \
+      wheel && \
+    pip3 install --upgrade --no-cache-dir --no-deps keras_preprocessing
+
 
 # build and install onnx
-RUN cd /tmp && \
-    git clone -b v1.7.0 https://github.com/onnx/onnx.git && \
-    cd onnx && \
-    git submodule update --init --recursive && \
-    python3 setup.py install && \
-    rm -rf /tmp/onnx
+WORKDIR /tmp
+RUN git clone -b v1.7.0 https://github.com/onnx/onnx.git
+
+WORKDIR /tmp/onnx
+RUN git submodule update --init --recursive && \
+    python3 setup.py install
+
+WORKDIR /tmp
+RUN rm -rf onnx
 
 # install bazel
-RUN cd /tmp && \
-    wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-linux-arm64 && \
+RUN wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-linux-arm64 && \
     ln -s /tmp/bazel-3.4.0-linux-arm64 /usr/bin/bazel && \
     chmod +x /tmp/bazel-3.4.0-linux-arm64 && /tmp/bazel-3.4.0-linux-arm64
 
 # build and install tensorflow
-RUN git clone --depth 1 -b v2.3.0 https://github.com/tensorflow/tensorflow.git \
-        /tmp/tensorflow && \
-    cd /tmp/tensorflow && \
-    yes "" | ./configure && \
+RUN git clone --depth 1 -b v2.3.0 https://github.com/tensorflow/tensorflow.git tensorflow
+
+WORKDIR /tmp/tensorflow
+RUN yes "" | ./configure && \
     bazel build --config=noaws --config=monolithic --local_cpu_resources=32 \
         //tensorflow/tools/pip_package:build_pip_package && \
     ./bazel-bin/tensorflow/tools/pip_package/build_pip_package \
         /tmp/tensorflow_pkg && \
-    pip3 install \
-        /tmp/tensorflow_pkg/tensorflow-2.3.0-cp36-cp36m-linux_aarch64.whl && \
-    rm -rf /tmp/tensorflow /tmp/tensorflow_pkg ~/.cache
+    pip3 install --no-cache-dir \
+        /tmp/tensorflow_pkg/tensorflow-2.3.0-cp36-cp36m-linux_aarch64.whl
+
+WORKDIR /tmp
+RUN rm -rf tensorflow tensorflow_pkg ~/.cache

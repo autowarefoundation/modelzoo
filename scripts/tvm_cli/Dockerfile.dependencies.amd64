@@ -1,11 +1,23 @@
 ARG FROM_ARG
+# hadolint ignore=DL3006
 FROM $FROM_ARG
 
 COPY install_tvm.sh /tmp/install_tvm.sh
 RUN /tmp/install_tvm.sh
 
-RUN pip3 install --upgrade pip && pip3 install onnx tensorflow pyyaml jinja2 \
-    pytest --use-feature=2020-resolver
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive \
-    apt-get install -y --no-install-recommends \
-    python-opencv libopencv-dev build-essential && rm -rf /var/lib/apt/lists/*
+# hadolint ignore=DL3013
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir --use-feature=2020-resolver \
+      jinja2 \
+      onnx \
+      pytest \
+      pyyaml \
+      tensorflow
+
+# hadolint ignore=DL3008
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      libopencv-dev \
+      python-opencv && \
+    rm -rf /var/lib/apt/lists/*
