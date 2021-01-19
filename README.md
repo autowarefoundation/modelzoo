@@ -161,3 +161,6 @@ This forms part of the validation workflow of the zoo as well as model
 deployment workflow for Autoware.
 
 See [TVM CLI documentation](scripts/tvm_cli/README.md) on how to use the tool.
+
+
+test ci
