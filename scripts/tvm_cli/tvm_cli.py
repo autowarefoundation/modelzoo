@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -112,6 +112,7 @@ def compilation_preprocess(args):
     info['target'] = args.target
     info['cross_compile'] = args.cross_compile
     info['autotvm_log'] = args.autotvm_log
+    info['header_extension'] = '.h' if args.autoware_version == 'ai' else '.hpp'
 
     info = yaml_processing(args.config, info)
 
@@ -195,6 +196,7 @@ def generate_config_file(info):
     with open(filename, 'w') as fh:
         fh.write(template.render(
             namespace = info['namespace'],
+            header_extension = info['header_extension'],
             network_module_path = path.join('.',
                                             OUTPUT_NETWORK_MODULE_FILENAME),
             network_graph_path = path.join('.',
@@ -399,6 +401,10 @@ if __name__ == '__main__':
         parser.add_argument('--autotvm_log',
                             help='Path to an autotvm .log file, can speed up '
                                  'inference')
+        parser.add_argument('--autoware_version',
+                            help='Set the targeted Autoware version',
+                            choices=['ai', 'auto'],
+                            default='auto')
 
         parsed_args = parser.parse_args(sys.argv[2:])
 

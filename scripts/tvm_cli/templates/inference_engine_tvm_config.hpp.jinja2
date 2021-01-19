@@ -1,5 +1,5 @@
 {%- set namespace = ["model_zoo"] + namespace.split('/') -%}
-#include "tvm_utility/pipeline.hpp"
+#include "tvm_utility/pipeline{{ header_extension }}"
 
 #pragma once
 {% for ns in namespace %}
