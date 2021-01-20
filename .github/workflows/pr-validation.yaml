@@ -10,7 +10,7 @@ jobs:
       runs-on: ubuntu-latest
 
       container:
-        image: autoware/model-zoo-tvm-cli:latest
+        image: autoware/model-zoo-tvm-cli:bleedingedge
 
       steps:
 
