@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -27,18 +27,22 @@ for definition_file in definition_files:
         if yaml.safe_load(yaml_file)['enable_testing']:
             files_to_test.append(definition_file)
 
-# Generate a separate test for every .yaml file
+# Parameterizing the test_tvm_cli function, we generate two separate tests for
+# every .yaml file: one for x86 and one for aarch64 cross compilation
+@pytest.mark.parametrize('target', ['x86', 'aarch64-cross-compilation'])
 @pytest.mark.parametrize('definition_file', files_to_test)
-def test_tvm_cli(definition_file):
+def test_tvm_cli(target, definition_file):
     # Create a temporary directory for every model
     output_folder = tempfile.mkdtemp()
 
     # Execute tvm_cli and check the return code
-    proc = subprocess.run(
-        [path.join(MOUNT_PATH, "./scripts/tvm_cli/tvm_cli.py"),
-         'compile',
-         '--config', definition_file,
-         '--output_path', output_folder])
+    run_arg = [path.join(MOUNT_PATH, "./scripts/tvm_cli/tvm_cli.py"),
+               'compile',
+               '--config', definition_file,
+               '--output_path', output_folder]
+    if target == 'aarch64-cross-compilation':
+        run_arg.append('--cross_compile')
+    proc = subprocess.run(run_arg)
     assert proc.returncode == 0
 
     # Check if the files have been generated
