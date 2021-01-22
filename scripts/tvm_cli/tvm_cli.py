@@ -146,7 +146,7 @@ def compile_model(info):
     if info['cross_compile']:
         if info['target'] == 'cuda':
             raise Exception('cuda cross-compilation not supported yet')
-        info['target'] += ' -target=aarch64-linux-gnu'
+        info['target'] += ' -mtriple=aarch64-linux-gnu'
 
     # Compile model
     with autotvm.apply_history_best(info['autotvm_log']):
@@ -166,11 +166,11 @@ def compile_model(info):
     print('Writing library to', output_model_path)
     if info['cross_compile']:
         lib.export_library(output_model_path,
-                           cc.build_create_shared_func(
+                           cc.cross_compiler(
+                               compile_func='/usr/bin/clang',
                                options=['--target=aarch64-linux-gnu',
                                         '-march=armv8-a',
-                                        '-mfpu=NEON'],
-                               compile_cmd='/usr/bin/clang'))
+                                        '-mfpu=NEON']))
     else:
         lib.export_library(output_model_path)
 
