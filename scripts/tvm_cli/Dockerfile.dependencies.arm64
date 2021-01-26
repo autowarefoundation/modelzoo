@@ -65,7 +65,7 @@ RUN wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0
 RUN git clone --depth 1 -b v2.3.0 https://github.com/tensorflow/tensorflow.git tensorflow
 
 WORKDIR /tmp/tensorflow
-RUN yes "" | ./configure && \
+RUN (yes "" || true ) | ./configure && \
     bazel build --config=noaws --config=monolithic --local_cpu_resources=32 \
         //tensorflow/tools/pip_package:build_pip_package && \
     ./bazel-bin/tensorflow/tools/pip_package/build_pip_package \
