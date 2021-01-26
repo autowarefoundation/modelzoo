@@ -21,6 +21,7 @@ import tensorflow as tf
 import numpy as np
 import tvm.contrib.graph_runtime as runtime
 from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
+from tvm.autotvm.graph_tuner import DPTuner, PBQPTuner
 
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
 OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"
@@ -89,14 +90,19 @@ def get_network(info):
     else:
         raise Exception('Model file format not supported')
 
-    # Transform data layout to what is expected by CUDA hardware, i.e. NCHW
+    # Transform data layout to what is expected by CUDA hardware, i.e. NCHW.
+    # The same code is used in the llvm case too, as this allows for a simpler
+    # handling of AutoTVM tuning. For tuning on x86, the NCHWc layout would be
+    # the best choice, but TVM doesn't fully support it yet
     if info['target'] == 'cuda':
         desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
-        seq = tvm.transform.Sequential(
-            [relay.transform.RemoveUnusedFunctions(),
-            relay.transform.ConvertLayout(desired_layouts)])
-        with tvm.transform.PassContext(opt_level=3):
-            mod = seq(mod)
+    elif info['target'].startswith('llvm'):
+        desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
+    seq = tvm.transform.Sequential(
+        [relay.transform.RemoveUnusedFunctions(),
+         relay.transform.ConvertLayout(desired_layouts)])
+    with tvm.transform.PassContext(opt_level=3):
+        mod = seq(mod)
 
     return mod, params
 
@@ -149,7 +155,17 @@ def compile_model(info):
         info['target'] += ' -mtriple=aarch64-linux-gnu'
 
     # Compile model
-    with autotvm.apply_history_best(info['autotvm_log']):
+    if info['autotvm_log'] is not None:
+        if info['target'].startswith('llvm'):
+            cm = autotvm.apply_graph_best(info['autotvm_log'])
+        elif info['target'] == 'cuda':
+            cm = autotvm.apply_history_best(info['autotvm_log'])
+        with cm:
+            with relay.build_config(opt_level=3):
+                graph, lib, params = relay.build(mod,
+                                                 target=info['target'],
+                                                 params=params)
+    else:
         with relay.build_config(opt_level=3):
             graph, lib, params = relay.build(mod,
                                              target=info['target'],
@@ -244,121 +260,144 @@ def tuning_preprocess(args):
 
 # This function performs the tuning of a model
 def tune_model(info):
-    def tune_cuda(mod, params):
-        def tune_tasks(
-            tasks,
-            target,
-            measure_option,
-            tuner,
-            n_trial,
-            early_stopping,
-            log_filename,
-            use_transfer_learning
-        ):
-            # Overwrite AutoTVM_config contents if the user provides the
-            # corresponding arguments
-            if info['tuner'] is not None:
-                tuner = info['tuner']
-            if info['n_trial'] is not None:
-                n_trial = info['n_trial']
-            if info['early_stopping'] is not None:
-                early_stopping = info['early_stopping']
+    def tune_kernels(
+        tasks,
+        target,
+        measure_option,
+        tuner,
+        n_trial,
+        early_stopping,
+        log_filename,
+        min_exec_graph_tuner=None
+    ):
+        # Overwrite AutoTVM_config contents if the user provides the
+        # corresponding arguments
+        if info['tuner'] is not None:
+            tuner = info['tuner']
+        if info['n_trial'] is not None:
+            n_trial = info['n_trial']
+        if info['early_stopping'] is not None:
+            early_stopping = info['early_stopping']
 
-            # create tmp log file
-            tmp_log_file = log_filename + ".tmp"
-            if os.path.exists(tmp_log_file):
-                os.remove(tmp_log_file)
+        for i, tsk in enumerate(reversed(tasks)):
+            prefix = "[Task %2d/%2d] " % (i + 1, len(tasks))
 
-            for i, tsk in enumerate(reversed(tasks)):
-                prefix = "[Task %2d/%2d] " % (i + 1, len(tasks))
+            # create tuner
+            if tuner == "xgb" or tuner == "xgb-rank":
+                tuner_obj = XGBTuner(tsk, loss_type="rank")
+            elif tuner == "ga":
+                tuner_obj = GATuner(tsk, pop_size=100)
+            elif tuner == "random":
+                tuner_obj = RandomTuner(tsk)
+            elif tuner == "gridsearch":
+                tuner_obj = GridSearchTuner(tsk)
+            else:
+                raise ValueError("Invalid tuner: " + tuner)
 
-                # create tuner
-                if tuner == "xgb" or tuner == "xgb-rank":
-                    tuner_obj = XGBTuner(tsk, loss_type="rank")
-                elif tuner == "ga":
-                    tuner_obj = GATuner(tsk, pop_size=100)
-                elif tuner == "random":
-                    tuner_obj = RandomTuner(tsk)
-                elif tuner == "gridsearch":
-                    tuner_obj = GridSearchTuner(tsk)
-                else:
-                    raise ValueError("Invalid tuner: " + tuner)
+            # do tuning
+            tsk_trial = min(n_trial, len(tsk.config_space))
+            tuner_obj.tune(
+                n_trial=tsk_trial,
+                early_stopping=early_stopping,
+                measure_option=measure_option,
+                callbacks=[
+                    autotvm.callback.progress_bar(tsk_trial, prefix=prefix),
+                    autotvm.callback.log_to_file(path.join(
+                        info['output_path'],
+                        log_filename)),
+                ],
+            )
 
-                if use_transfer_learning and os.path.isfile(tmp_log_file):
-                    tuner_obj.load_history(
-                        autotvm.record.load_from_file(tmp_log_file))
-
-                # do tuning
-                tsk_trial = min(n_trial, len(tsk.config_space))
-                tuner_obj.tune(
-                    n_trial=tsk_trial,
-                    early_stopping=early_stopping,
-                    measure_option=measure_option,
-                    callbacks=[
-                        autotvm.callback.progress_bar(tsk_trial, prefix=prefix),
-                        autotvm.callback.log_to_file(tmp_log_file),
-                    ],
-                )
-
-            # pick best records to a cache file
-            autotvm.record.pick_best(tmp_log_file,
-                                     path.join(info['output_path'],
-                                               log_filename))
-            os.remove(tmp_log_file)
-
-        # extract workloads from relay program
-        print("Extract tasks...")
-        tasks = autotvm.task.extract_from_program(
-            mod["main"],
-            target=info['target'],
-            params=params,
-            ops=(relay.op.get("nn.conv2d"),))
-
-        # run tuning tasks
-        print("Tuning...")
-        tune_tasks(tasks, **tuning_opt)
-
-        print("The .log file has been saved in " +
-              path.join(info['output_path'], tuning_opt['log_filename']))
-
-        if info['evaluate_inference_time']:
-            # compile kernels with history best records
-            with autotvm.apply_history_best(
-                path.join(info['output_path'],
-                          tuning_opt['log_filename'])):
-                print("Compile...")
-                with tvm.transform.PassContext(opt_level=3):
-                    lib = relay.build_module.build(mod,
-                                                   target=info['target'],
-                                                   params=params)
-
-                # load parameters
-                ctx = tvm.context(info['target'], 0)
-                module = runtime.GraphModule(lib["default"](ctx))
-                for name, shape in info['input_dict'].items():
-                    data_tvm = tvm.nd.array(
-                        (np.random.uniform(
-                            size=[1 if x == -1 else x for x in shape]))
-                        .astype(info['input_data_type']))
-                    module.set_input(name, data_tvm)
-
-                # evaluate
-                print("Evaluate inference time cost...")
-                ftimer = module.module.time_evaluator("run",
-                                                      ctx,
-                                                      number=1,
-                                                      repeat=600)
-                prof_res = np.array(ftimer().results) * 1000  # convert to ms
-                print("Mean inference time (std dev): %.2f ms (%.2f ms)"
-                      % (np.mean(prof_res), np.std(prof_res)))
+    # Use graph tuner to achieve graph level optimal schedules
+    # Set use_DP=False if it takes too long to finish.
+    def tune_graph(graph,
+                   records,
+                   opt_sch_file,
+                   min_exec_graph_tuner,
+                   use_DP=True):
+        target_op = [
+            relay.op.get('nn.conv2d'),
+        ]
+        Tuner = DPTuner if use_DP else PBQPTuner
+        executor = Tuner(graph,
+                         {name:[1 if x == -1 else x for x in shape]
+                          for (name,shape) in info['input_dict'].items()},
+                         records,
+                         target_op,
+                         info['target'])
+        executor.benchmark_layout_transform(min_exec_num=min_exec_graph_tuner)
+        executor.run()
+        executor.write_opt_sch2record_file(path.join(info['output_path'],
+                                                     opt_sch_file))
 
     tuning_opt = info['cfg'].tuning_options
     info['target'] = tuning_opt['target']
     mod, params = get_network(info)
+
+    # extract workloads from relay program
+    print("Extract tasks...")
+    tasks = autotvm.task.extract_from_program(
+        mod["main"],
+        target=info['target'],
+        params=params,
+        ops=(relay.op.get("nn.conv2d"),))
+
+    # run tuning tasks
+    print("Tuning...")
+    tune_kernels(tasks, **tuning_opt)
+    if info['target'].startswith('llvm'):
+        opt_sch_file = tuning_opt['log_filename'][:-4] + '_graph_opt.log'
+        tune_graph(
+            mod['main'],
+            path.join(info['output_path'], tuning_opt['log_filename']),
+            path.join(info['output_path'], opt_sch_file),
+            tuning_opt['min_exec_graph_tuner'])
+
     if info['target'] == 'cuda':
-        tune_cuda(mod, params)
-    else:
-        raise Exception('Tuning target not supported yet')
+        print("The .log file has been saved in " +
+              path.join(info['output_path'], tuning_opt['log_filename']))
+    elif info['target'].startswith('llvm'):
+        print("The .log file has been saved in " +
+              path.join(info['output_path'], opt_sch_file))
+
+    if info['evaluate_inference_time']:
+        if info['target'] == 'cuda':
+            cm = autotvm.apply_history_best(
+                path.join(info['output_path'],
+                          tuning_opt['log_filename']))
+        elif info['target'].startswith('llvm'):
+            cm = autotvm.apply_graph_best(
+                path.join(info['output_path'], opt_sch_file))
+        # compile
+        with cm:
+            print("Compile...")
+            with tvm.transform.PassContext(opt_level=3):
+                lib = relay.build_module.build(mod,
+                                               target=info['target'],
+                                               params=params)
+
+            # load parameters
+            if info['target'] == 'cuda':
+                ctx = tvm.context(info['target'], 0)
+            elif info['target'].startswith('llvm'):
+                ctx = tvm.cpu()
+            module = runtime.GraphModule(lib["default"](ctx))
+            for name, shape in info['input_dict'].items():
+                data_tvm = tvm.nd.array(
+                    (np.random.uniform(
+                        size=[1 if x == -1 else x for x in shape]))
+                    .astype(info['input_data_type']))
+                module.set_input(name, data_tvm)
+
+            # evaluate
+            print("Evaluate inference time cost...")
+            ftimer = module.module.time_evaluator("run",
+                                                  ctx,
+                                                  number=10,
+                                                  repeat=60)
+            prof_res = np.array(ftimer().results) * 1000
+            print("Mean inference time (std dev): %.2f ms (%.2f ms)"
+                  % (np.mean(prof_res), np.std(prof_res)))
 
 if __name__ == '__main__':
     import argparse
@@ -422,8 +461,7 @@ if __name__ == '__main__':
 
     def tune():
         parser = argparse.ArgumentParser(
-            description='Tune a model using AutoTVM, at the moment only CUDA '
-                        'target is supported',
+            description='Tune a model using AutoTVM',
             usage='''tvm_cli tune [<args>]''')
         requiredNamed = parser.add_argument_group('required arguments')
         requiredNamed.add_argument('--config',
@@ -444,7 +482,7 @@ if __name__ == '__main__':
                                      'gridsearch'])
         parser.add_argument('--n_trial',
                             help='Maximum number of configurations to try, '
-                                 'overrides --autotvm_config contents',
+                                 'overrides --autotvm_config contents.',
                             type=int)
         parser.add_argument('--early_stopping',
                             help='Early stop the tuning when not finding '
