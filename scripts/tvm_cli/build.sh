@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# Copyright 2020 Autoware Foundation. All rights reserved.
+# Copyright 2020-2021 Autoware Foundation. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,10 @@ eval set -- "$OPTS"
 while true; do
   case $1 in
     -c|--cuda)
-      FROM_ARG="nvidia/cuda:10.1-devel-ubuntu18.04"
+      FROM_ARG="nvidia/cuda-arm64:11.1-devel-ubuntu18.04"
+      if [[ $(uname -a) == *"x86_64"* ]]; then
+        FROM_ARG="nvidia/cuda:10.1-devel-ubuntu18.04"
+      fi
       shift 1
       ;;
     -h|--help)
