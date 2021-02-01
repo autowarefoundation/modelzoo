@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# Copyright 2020 Autoware Foundation. All rights reserved.
+# Copyright 2020-2021 Autoware Foundation. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ fi
 rm -rf /var/lib/apt/lists/*
 python3 -m pip install --upgrade pip
 pip3 install mypy orderedset "antlr4-python3-runtime>=4.7,<4.8" \
-  psutil xgboost tornado cython
+  psutil "xgboost>=1.2.0,<1.3.0" tornado cython
 
 # clone tvm and create build directory
 git clone --branch ${TVM_VERSION_TAG} --recursive \
