@@ -21,3 +21,12 @@ RUN apt-get update && \
       libopencv-dev \
       python-opencv && \
     rm -rf /var/lib/apt/lists/*
+
+ENV HOME=/tmp
+WORKDIR /tmp
+COPY tvm_cli.py /tvm_cli/tvm_cli
+COPY templates /tvm_cli/templates
+# hadolint ignore=DL3044
+ENV PATH="/tvm_cli:${PATH}"
+ENTRYPOINT [ "tvm_cli"]
+CMD ["-h"]
