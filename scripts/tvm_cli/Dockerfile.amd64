@@ -2,8 +2,14 @@ ARG FROM_ARG
 # hadolint ignore=DL3006
 FROM $FROM_ARG
 
-COPY install_tvm.sh /tmp/install_tvm.sh
-RUN /tmp/install_tvm.sh
+# hadolint ignore=DL3008
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      libopencv-dev \
+      python3-pip \
+      python3-opencv && \
+    rm -rf /var/lib/apt/lists/*
 
 # hadolint ignore=DL3013
 RUN pip3 install --no-cache-dir --upgrade pip && \
@@ -12,15 +18,11 @@ RUN pip3 install --no-cache-dir --upgrade pip && \
       onnx \
       pytest \
       pyyaml \
+      "numpy<1.19.0" \
       "tensorflow==2.3.1"
 
-# hadolint ignore=DL3008
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      build-essential \
-      libopencv-dev \
-      python-opencv && \
-    rm -rf /var/lib/apt/lists/*
+COPY install_tvm.sh /tmp/install_tvm.sh
+RUN /tmp/install_tvm.sh
 
 ENV HOME=/tmp
 WORKDIR /tmp
@@ -30,3 +32,6 @@ COPY templates /tvm_cli/templates
 ENV PATH="/tvm_cli:${PATH}"
 ENTRYPOINT [ "tvm_cli"]
 CMD ["-h"]
+
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,graphics

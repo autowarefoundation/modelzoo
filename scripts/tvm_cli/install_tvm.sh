@@ -29,8 +29,27 @@ apt-get update
 apt-get install -y --no-install-recommends \
         ca-certificates ninja-build git python \
         cmake libopenblas-dev g++ llvm-8 llvm-8-dev clang-9 \
-        python3.6 python3.6-dev python3-setuptools python3-pip antlr4 \
+        python3.8 python3.8-dev python3-setuptools python3-pip antlr4 \
         build-essential
+
+# install opencl
+apt-get install -y --no-install-recommends \
+    mesa-opencl-icd opencl-headers clinfo ocl-icd-opencl-dev
+mkdir -p /etc/OpenCL/vendors
+echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
+echo "/usr/local/nvidia/lib" >> /etc/ld.so.conf.d/nvidia.conf
+echo "/usr/local/nvidia/lib64" >> /etc/ld.so.conf.d/nvidia.conf
+
+# install vulkan (and opengl to have vulkan work nicely with nvidia)
+apt-get install -y --no-install-recommends \
+    libvulkan1 libvulkan-dev mesa-vulkan-drivers spirv-headers spirv-tools \
+    libglvnd0 libgl1 libglx0 libegl1 libgles2
+mkdir -p /usr/share/vulkan/icd.d
+echo "{ \"file_format_version\" : \"1.0.0\", \"ICD\": { \"library_path\":
+    \"libGLX_nvidia.so.0\" } }" > /usr/share/vulkan/icd.d/nvidia_icd.json
+mkdir -p /usr/share/glvnd/egl_vendor.d
+echo "{ \"file_format_version\" : \"1.0.0\", \"ICD\": { \"library_path\":
+    \"libEGL_nvidia.so.0\" } }" > /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
 # link clang-9 to be the default clang
 update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
@@ -61,6 +80,8 @@ echo "set(USE_LLVM llvm-config-8)" >> ${TVM_BUILD_CONFIG}
 echo "set(USE_SORT ON)" >> ${TVM_BUILD_CONFIG}
 echo "set(USE_GRAPH_RUNTIME ON)" >> ${TVM_BUILD_CONFIG}
 echo "set(USE_BLAS openblas)" >> ${TVM_BUILD_CONFIG}
+echo "set(USE_OPENCL ON)" >> ${TVM_BUILD_CONFIG}
+echo "set(USE_VULKAN ON)" >> ${TVM_BUILD_CONFIG}
 if [[ -d "/usr/local/cuda" ]]; then
     echo "set(USE_CUDA ON)" >> ${TVM_BUILD_CONFIG}
 fi

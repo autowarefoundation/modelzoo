@@ -5,8 +5,10 @@ A command line tool that compiles neural network models using
 
 ## Usage
 
-In all the subsequent commands, if CUDA needs to be enabled, the docker image
-must be run with a flag which exposes the gpu, e.g. [--gpus 0] or [--gpus all].
+In all the subsequent commands, if a GPU needs to be enabled, the docker image
+must be run with the correct flags, e.g. [--gpus 0] or [--gpus all] when running
+an Nvidia GPU with proprietary drivers and
+[--device /dev/dri --group-add video] otherwise.
 
 ```bash
 $ docker run -it --rm -v `pwd`:`pwd` -w `pwd` \
@@ -113,10 +115,7 @@ Successfully built 547afbbfd193
 Successfully tagged autoware/model-zoo-tvm-cli:local
 ```
 
-The previous commands are then used with `:local` instead of `:latest`. If
-Nvidia drivers are installed on the system, CUDA will be enabled for TVM. The
-script also distinguish between an arm64 and an amd64 system to build the
-appropriate docker image.
+The previous commands are then used with `:local` instead of `:latest`.
 
 *Note:* If CUDA is needed, the `build.sh` script must be invoked with the `-c`
 argument. In all the docker commands shown, if CUDA needs to be enabled, the

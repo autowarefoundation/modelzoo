@@ -28,6 +28,8 @@ OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"
 OUTPUT_NETWORK_PARAM_FILENAME = "deploy_param.params"
 OUTPUT_CONFIG_FILENAME = "inference_engine_tvm_config.hpp"
 
+GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
+
 # Utility function: definition.yaml file processing
 def yaml_processing(config, info):
     with open(config, 'r') as yml_file:
@@ -94,10 +96,12 @@ def get_network(info):
     # The same code is used in the llvm case too, as this allows for a simpler
     # handling of AutoTVM tuning. For tuning on x86, the NCHWc layout would be
     # the best choice, but TVM doesn't fully support it yet
-    if info['target'] == 'cuda':
+    if info['target'] in GPU_TARGETS:
         desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
     elif info['target'].startswith('llvm'):
         desired_layouts = {'nn.conv2d': ['NCHW', 'default']}
+    else:
+        raise Exception('Target not supported')
     seq = tvm.transform.Sequential(
         [relay.transform.RemoveUnusedFunctions(),
          relay.transform.ConvertLayout(desired_layouts)])
@@ -150,15 +154,15 @@ def compile_model(info):
 
     # Set compilation params
     if info['cross_compile']:
-        if info['target'] == 'cuda':
-            raise Exception('cuda cross-compilation not supported yet')
+        if info['target'] in GPU_TARGETS:
+            raise Exception(info['target'] + ' cross-compilation not supported yet')
         info['target'] += ' -mtriple=aarch64-linux-gnu'
 
     # Compile model
     if info['autotvm_log'] is not None:
         if info['target'].startswith('llvm'):
             cm = autotvm.apply_graph_best(info['autotvm_log'])
-        elif info['target'] == 'cuda':
+        elif info['target'] in GPU_TARGETS:
             cm = autotvm.apply_history_best(info['autotvm_log'])
         with cm:
             with relay.build_config(opt_level=3):
@@ -353,7 +357,7 @@ def tune_model(info):
             path.join(info['output_path'], opt_sch_file),
             tuning_opt['min_exec_graph_tuner'])
 
-    if info['target'] == 'cuda':
+    if info['target'] in GPU_TARGETS:
         print("The .log file has been saved in " +
               path.join(info['output_path'], tuning_opt['log_filename']))
     elif info['target'].startswith('llvm'):
@@ -361,7 +365,7 @@ def tune_model(info):
               path.join(info['output_path'], opt_sch_file))
 
     if info['evaluate_inference_time']:
-        if info['target'] == 'cuda':
+        if info['target'] in GPU_TARGETS:
             cm = autotvm.apply_history_best(
                 path.join(info['output_path'],
                           tuning_opt['log_filename']))
@@ -377,8 +381,8 @@ def tune_model(info):
                                                params=params)
 
             # load parameters
-            if info['target'] == 'cuda':
-                ctx = tvm.context(info['target'], 0)
+            if info['target'] in GPU_TARGETS:
+                ctx = tvm.context(info['target'], info['device_id'])
             elif info['target'].startswith('llvm'):
                 ctx = tvm.cpu()
             module = runtime.GraphModule(lib["default"](ctx))
@@ -424,14 +428,14 @@ if __name__ == '__main__':
         parser.add_argument('--device_id',
                             help='User-specified device ID',
                             type=int,
-                            default=1)
+                            default=0)
         parser.add_argument('--lanes',
                             help='Number of lanes, default value is 1',
                             type=int,
                             default=1)
         parser.add_argument('--target',
                             help='Set the compilation target',
-                            choices=['llvm', 'cuda'],
+                            choices=['llvm'] + GPU_TARGETS,
                             default='llvm')
         parser.add_argument('--cross_compile',
                             help='Set to cross compile for ArmV8a with NEON',

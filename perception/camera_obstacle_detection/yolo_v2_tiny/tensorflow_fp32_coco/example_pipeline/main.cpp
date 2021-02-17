@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2020, Arm Limited and Contributors. All rights reserved.
+// Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -112,11 +112,11 @@ int main(int argc, char const *argv[]) {
   int64_t shape_y[] = {1, NETWORK_OUTPUT_WIDTH, NETWORK_OUTPUT_HEIGHT,
                        NETWORK_OUTPUT_DEPTH};
   TVMArrayAlloc(shape_y, sizeof(shape_y) / sizeof(shape_y[0]), TVM_DTYPE_CODE,
-                TVM_DTYPE_BITS, TVM_DTYPE_LANES, TVM_DEVICE_TYPE, TVM_DEVICE_ID,
+                TVM_DTYPE_BITS, TVM_DTYPE_LANES, kDLCPU, 0,
                 &y);
 
   // read input image
-  auto image = cv::imread(IMAGE_FILENAME, CV_LOAD_IMAGE_COLOR);
+  auto image = cv::imread(IMAGE_FILENAME, cv::IMREAD_COLOR);
 
   // Compute the ratio for resizing and size for padding
   double scale_x =
@@ -146,7 +146,7 @@ int main(int argc, char const *argv[]) {
 
   // cv library use BGR as a default color format, the network expects the data
   // in RGB format
-  cv::cvtColor(image_3f, image_3f, CV_BGR2RGB);
+  cv::cvtColor(image_3f, image_3f, cv::COLOR_BGR2RGB);
 
   // copy data from cv::Mat into input DLTensor
   TVMArrayCopyFromBytes(x, image_3f.data,
