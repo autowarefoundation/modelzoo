@@ -13,7 +13,10 @@ jobs:
 
       if: github.repository_owner == 'autowarefoundation'
 
-      runs-on: ubuntu-latest
+      runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          os: [ubuntu-latest, ARM64]
       env:
         IMAGE_NAME: autoware/model-zoo-tvm-cli
         TAG_NAME: bleedingedge
@@ -23,22 +26,31 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v2
 
-        - name: amd64 image build
+        - name: image build
           run: |
             docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
-            # Build image
-            ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME"
+            ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME" --ci
 
-        - name: amd64 image push
+        - name: amd64 image re-tag and push
+          if: contains(matrix.os, 'ubuntu-latest')
           run: |
-            # Push images to docker hub space
-            docker push $IMAGE_NAME:$TAG_NAME
+            docker tag $IMAGE_NAME:$TAG_NAME $IMAGE_NAME:$TAG_NAME-amd64
+            docker push $IMAGE_NAME:$TAG_NAME-amd64
+
+        - name: arm64 image re-tag and push
+          if: contains(matrix.os, 'ARM64')
+          run: |
+            docker tag $IMAGE_NAME:$TAG_NAME $IMAGE_NAME:$TAG_NAME-arm64
+            docker push $IMAGE_NAME:$TAG_NAME-arm64
 
   build-push-docker-cuda:
 
       if: github.repository_owner == 'autowarefoundation'
 
-      runs-on: ubuntu-latest
+      runs-on: ${{ matrix.os }}
+      strategy:
+        matrix:
+          os: [ubuntu-latest, ARM64]
       env:
         IMAGE_NAME: autoware/model-zoo-tvm-cli
         TAG_NAME: bleedingedge-cuda
@@ -48,13 +60,46 @@ jobs:
         - name: Checkout
           uses: actions/checkout@v2
 
-        - name: amd64 image build with cuda
+        - name: image build with cuda
           run: |
             docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
-            # Build image
-            ./scripts/tvm_cli/build.sh -c -i "$IMAGE_NAME" -t "$TAG_NAME"
+            ./scripts/tvm_cli/build.sh -c -i "$IMAGE_NAME" -t "$TAG_NAME" --ci
 
-        - name: amd64 cuda image push
+        - name: amd64 cuda image re-tag and push
+          if: contains(matrix.os, 'ubuntu-latest')
           run: |
-            # Push images to docker hub space
-            docker push $IMAGE_NAME:$TAG_NAME
+            docker tag $IMAGE_NAME:$TAG_NAME $IMAGE_NAME:$TAG_NAME-amd64
+            docker push $IMAGE_NAME:$TAG_NAME-amd64
+
+        - name: arm64 cuda image re-tag and push
+          if: contains(matrix.os, 'ARM64')
+          run: |
+            docker tag $IMAGE_NAME:$TAG_NAME $IMAGE_NAME:$TAG_NAME-arm64
+            docker push $IMAGE_NAME:$TAG_NAME-arm64
+
+  platforms-bundle:
+
+    if: github.repository_owner == 'autowarefoundation'
+
+    needs: [build-push-docker, build-push-docker-cuda]
+
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: autoware/model-zoo-tvm-cli
+      TAG_NAME: bleedingedge
+
+    steps:
+
+      - name: Manifest build and push
+        run: |
+          docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          docker manifest create $IMAGE_NAME:$TAG_NAME --amend $IMAGE_NAME:$TAG_NAME-amd64 --amend $IMAGE_NAME:$TAG_NAME-arm64
+          docker manifest push $IMAGE_NAME:$TAG_NAME
+
+      - name: Manifest build and push cuda
+        run: |
+          docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          docker manifest create $IMAGE_NAME:$TAG_NAME-cuda --amend $IMAGE_NAME:$TAG_NAME-cuda-amd64 --amend $IMAGE_NAME:$TAG_NAME-cuda-arm64
+          docker manifest push $IMAGE_NAME:$TAG_NAME-cuda

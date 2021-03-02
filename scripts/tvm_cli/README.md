@@ -88,7 +88,7 @@ which weren't.
 Instead of pulling the docker image, it can be built locally using the
 `build.sh` script:
 
-```bash
+```
 Usage: ./scripts/tvm_cli/build.sh [OPTIONS]
     -c,--cuda              Build TVM cli with cuda enabled.
     -h,--help              Display the usage and exit.
@@ -96,6 +96,9 @@ Usage: ./scripts/tvm_cli/build.sh [OPTIONS]
                            Default: autoware/model-zoo-tvm-cli
     -t,--tag <tag>         Tag use for the docker images.
                            Default: local
+    --platform <platform>  Set target platform. Possible values: amd64, arm64.
+                           Default: {native platform}
+    --ci                   Enable CI-relevant build options
 ```
 
 Here an example to build the image with default parameters:
@@ -119,3 +122,7 @@ appropriate docker image.
 argument. In all the docker commands shown, if CUDA needs to be enabled, the
 docker image must be run with a flag which exposes the gpu, e.g.
 [--gpus 0] or [--gpus all].
+
+*Note:* Cross-compilation is possible but experimental. Follow the
+[buildx](https://github.com/docker/buildx#building-multi-platform-images)
+instructions to setup your system.
