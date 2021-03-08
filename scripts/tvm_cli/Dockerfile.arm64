@@ -7,7 +7,8 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Install dependencies
 # hadolint ignore=DL3008
 RUN apt-get update && \
-    apt-get -y install --no-install-recommends software-properties-common && \
+    DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
+        software-properties-common && \
     rm -rf /var/lib/apt/lists/*
 
 # hadolint ignore=DL3008
@@ -20,11 +21,10 @@ RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
         libopencv-dev \
         libprotobuf-dev \
         protobuf-compiler \
-        python-opencv \
-        openjdk-11-jdk-headless \
+        python3-opencv \
         ca-certificates ninja-build git python \
         cmake libopenblas-dev g++ llvm-8 llvm-8-dev clang-9 \
-        python3.6 python3.6-dev python3-setuptools python3-pip antlr4 \
+        python3.8 python3.8-dev python3-setuptools python3-pip antlr4 \
         wget && \
     rm -rf /var/lib/apt/lists/*
 
@@ -69,7 +69,7 @@ RUN git clone --depth 1 -b v2.3.0 https://github.com/tensorflow/tensorflow.git .
     ./bazel-bin/tensorflow/tools/pip_package/build_pip_package \
         /tmp/tensorflow_pkg && \
     pip3 install --no-cache-dir \
-        /tmp/tensorflow_pkg/tensorflow-2.3.0-cp36-cp36m-linux_aarch64.whl && \
+        /tmp/tensorflow_pkg/tensorflow-2.3.0-cp38-cp38-linux_aarch64.whl && \
     rm -rf ../tensorflow ../tensorflow_pkg ~/.cache
 
 COPY install_tvm.sh /tmp/install_tvm.sh
@@ -83,3 +83,6 @@ COPY templates /tvm_cli/templates
 ENV PATH="/tvm_cli:${PATH}"
 ENTRYPOINT [ "tvm_cli"]
 CMD ["-h"]
+
+ENV NVIDIA_VISIBLE_DEVICES all
+ENV NVIDIA_DRIVER_CAPABILITIES compute,graphics

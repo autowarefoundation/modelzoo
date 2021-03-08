@@ -17,7 +17,7 @@ set -e
 
 IMAGE_NAME="autoware/model-zoo-tvm-cli"
 TAG_NAME="local"
-FROM_ARG="ubuntu:18.04"
+FROM_ARG="ubuntu:20.04"
 TARGET_PLATFORM="arm64"
 if [[ $(uname -a) == *"x86_64"* ]]; then
     TARGET_PLATFORM="amd64"
@@ -86,9 +86,9 @@ while true; do
 done
 
 if [ "$CUDA_ENABLED" == "true" ]; then
-  FROM_ARG="nvidia/cuda-arm64:11.1-devel-ubuntu18.04"
+  FROM_ARG="nvidia/cuda-arm64:11.2.1-devel-ubuntu20.04"
   if [[ "${TARGET_PLATFORM}" == "amd64" ]]; then
-    FROM_ARG="nvidia/cuda:10.1-devel-ubuntu18.04"
+    FROM_ARG="nvidia/cuda:11.0-devel-ubuntu20.04"
   fi
 fi
 

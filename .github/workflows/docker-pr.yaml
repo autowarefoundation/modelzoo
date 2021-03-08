@@ -24,8 +24,26 @@ jobs:
           hadolint scripts/tvm_cli/Dockerfile.amd64
           hadolint scripts/tvm_cli/Dockerfile.arm64
 
+  setup-docker-arm64:
+      runs-on: ARM64
+
+      steps:
+        - name: Install docker
+          run: |
+            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+            sudo apt-get update
+            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+            sudo groupadd docker || true
+            sudo usermod -aG docker ${USER}
+            sudo chmod 666 /var/run/docker.sock
+
+        - name: Prune docker
+          run: docker system prune -a -f
+
   build-docker:
-      needs: dockerfile-lint
+      needs: [dockerfile-lint, setup-docker-arm64]
 
       runs-on: ${{ matrix.os }}
       strategy:
@@ -36,18 +54,6 @@ jobs:
         TAG_NAME: bleedingedge
 
       steps:
-        - name: Install docker
-          if: contains(matrix.os, 'ARM64')
-          run: |
-            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-            sudo add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-            sudo apt-get update
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-            sudo groupadd docker || true
-            sudo usermod -aG docker ${USER}
-            sudo chmod 666 /var/run/docker.sock
-
         - name: Checkout
           uses: actions/checkout@v2
 
@@ -56,7 +62,7 @@ jobs:
             ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME" --ci
 
   build-docker-cuda:
-      needs: dockerfile-lint
+      needs: [dockerfile-lint, setup-docker-arm64]
 
       runs-on: ${{ matrix.os }}
       strategy:
@@ -67,18 +73,6 @@ jobs:
         TAG_NAME: bleedingedge-cuda
 
       steps:
-        - name: Install docker
-          if: contains(matrix.os, 'ARM64')
-          run: |
-            sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-            sudo add-apt-repository "deb [arch=arm64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-            sudo apt-get update
-            sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-            sudo groupadd docker || true
-            sudo usermod -aG docker ${USER}
-            sudo chmod 666 /var/run/docker.sock
-
         - name: Checkout
           uses: actions/checkout@v2
 
