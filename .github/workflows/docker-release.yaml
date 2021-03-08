@@ -64,6 +64,10 @@ jobs:
             docker push $IMAGE_NAME:$TAG_NAME-arm64
             docker push $IMAGE_NAME:latest-arm64
 
+        - name: docker logout
+          if: ${{ always() }}
+          run: docker logout
+
   build-push-docker-cuda:
       needs: get-tag
 
@@ -103,6 +107,10 @@ jobs:
             docker push $IMAGE_NAME:$TAG_NAME-arm64
             docker push $IMAGE_NAME:latest-cuda-arm64
 
+        - name: docker logout
+          if: ${{ always() }}
+          run: docker logout
+
   platforms-bundle-latest:
 
     if: github.repository_owner == 'autowarefoundation'
@@ -124,10 +132,13 @@ jobs:
 
       - name: Manifest build and push cuda
         run: |
-          docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
           export DOCKER_CLI_EXPERIMENTAL=enabled
           docker manifest create $IMAGE_NAME:$TAG_NAME-cuda --amend $IMAGE_NAME:$TAG_NAME-cuda-amd64 --amend $IMAGE_NAME:$TAG_NAME-cuda-arm64
           docker manifest push $IMAGE_NAME:$TAG_NAME-cuda
+
+      - name: docker logout
+        if: ${{ always() }}
+        run: docker logout
 
   platforms-bundle-release:
 
@@ -150,7 +161,10 @@ jobs:
 
       - name: Manifest build and push cuda
         run: |
-          docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
           export DOCKER_CLI_EXPERIMENTAL=enabled
           docker manifest create $IMAGE_NAME:$TAG_NAME-cuda --amend $IMAGE_NAME:$TAG_NAME-cuda-amd64 --amend $IMAGE_NAME:$TAG_NAME-cuda-arm64
           docker manifest push $IMAGE_NAME:$TAG_NAME-cuda
+
+      - name: docker logout
+        if: ${{ always() }}
+        run: docker logout
