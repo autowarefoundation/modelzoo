@@ -13,6 +13,7 @@ import pytest
 from glob import glob
 from os import path
 import tempfile
+import platform
 
 MOUNT_PATH = '/tmp'
 
@@ -27,9 +28,15 @@ for definition_file in definition_files:
         if yaml.safe_load(yaml_file)['enable_testing']:
             files_to_test.append(definition_file)
 
-# Parameterizing the test_tvm_cli function, we generate two separate tests for
-# every .yaml file: one for x86 and one for aarch64 cross compilation
-@pytest.mark.parametrize('target', ['x86', 'aarch64-cross-compilation'])
+# Determine the target platforms based on the native architecture.
+targets = ['native']
+if platform.machine() != 'aarch64':
+    targets.append('aarch64-cross-compilation')
+
+# Parameterizing the test_tvm_cli function, we generate separate tests for
+# every .yaml file: one for native compilation and one for aarch64 cross
+# compilation when necessary.
+@pytest.mark.parametrize('target', targets)
 @pytest.mark.parametrize('definition_file', files_to_test)
 def test_tvm_cli(target, definition_file):
     # Create a temporary directory for every model

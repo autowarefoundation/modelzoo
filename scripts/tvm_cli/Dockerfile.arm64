@@ -56,6 +56,7 @@ RUN git clone -b v1.7.0 https://github.com/onnx/onnx.git . && \
 
 # install bazel
 WORKDIR /tmp
+# hadolint ignore=DL3047
 RUN wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-linux-arm64 && \
     ln -s /tmp/bazel-3.4.0-linux-arm64 /usr/bin/bazel && \
     chmod +x /tmp/bazel-3.4.0-linux-arm64 && /tmp/bazel-3.4.0-linux-arm64
@@ -78,6 +79,8 @@ RUN /tmp/install_tvm.sh
 ENV HOME=/tmp
 WORKDIR /tmp
 COPY tvm_cli.py /tvm_cli/tvm_cli
+# RUN true to work around docker bug with COPY: https://github.com/moby/moby/issues/37965
+RUN true
 COPY templates /tvm_cli/templates
 # hadolint ignore=DL3044
 ENV PATH="/tvm_cli:${PATH}"
