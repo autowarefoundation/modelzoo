@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     container:
-      image: hadolint/hadolint:latest
+      image: hadolint/hadolint:latest-debian
 
     steps:
 
