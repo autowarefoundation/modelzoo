@@ -149,8 +149,10 @@ def compilation_preprocess(args):
     namespaces = model_dir.split(path.sep)
     if len(namespaces) < 4:
         info['namespace'] = model_dir
+        info['network_name'] = model_dir
     else:
         info['namespace'] = path.sep.join(namespaces[-4:])
+        info['network_name'] = namespaces[-2]
 
     return info
 
@@ -223,6 +225,8 @@ def generate_config_file(info):
         fh.write(template.render(
             namespace = info['namespace'],
             header_extension = info['header_extension'],
+            network_name = info['network_name'],
+            network_backend = info['target'],
             network_module_path = path.join('.',
                                             OUTPUT_NETWORK_MODULE_FILENAME),
             network_graph_path = path.join('.',
