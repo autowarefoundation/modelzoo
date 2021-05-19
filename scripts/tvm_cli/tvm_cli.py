@@ -28,6 +28,12 @@ OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"
 OUTPUT_NETWORK_PARAM_FILENAME = "deploy_param.params"
 OUTPUT_CONFIG_FILENAME = "inference_engine_tvm_config.hpp"
 
+TARGETS_DEVICES = {
+    'llvm':'kDLCPU',
+    'cuda':'kDLGPU',
+    'opencl':'kDLOpenCL',
+    'vulkan':'kDLVulkan',
+}
 GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
 
 # Utility function: definition.yaml file processing
@@ -117,7 +123,7 @@ def compilation_preprocess(args):
     info = {}
 
     info['lanes'] = args.lanes
-    info['device_type'] = args.device_type
+    info['device_type'] = TARGETS_DEVICES[args.target]
     info['device_id'] = args.device_id
     info['target'] = args.target
     info['cross_compile'] = args.cross_compile
@@ -409,7 +415,8 @@ if __name__ == '__main__':
     def compile():
         parser = argparse.ArgumentParser(
             description='Compile a model using TVM',
-            usage='''tvm_cli compile [<args>]''')
+            usage='''tvm_cli compile [<args>]''',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
         requiredNamed = parser.add_argument_group('required arguments')
         requiredNamed.add_argument('--config',
                                    help='Path to .yaml config file (input)',
@@ -419,33 +426,28 @@ if __name__ == '__main__':
                                         'network graph and network parameters '
                                         'will be stored',
                                    required=True)
-        parser.add_argument('--device_type',
-                            help='User-specified device type',
-                            choices=['kDLCPU', 'kDLGPU', 'kDLCPUPinned',
-                                     'kDLOpenCL', 'kDLVulkan', 'kDLMetal',
-                                     'kDLVPI', 'kDLROCM', 'kDLExtDev'],
-                            default='kDLCPU')
+        targets = list(TARGETS_DEVICES)
+        parser.add_argument('--target',
+                            help='Compilation target',
+                            choices=targets,
+                            default=targets[0])
         parser.add_argument('--device_id',
-                            help='User-specified device ID',
+                            help='Device ID',
                             type=int,
                             default=0)
         parser.add_argument('--lanes',
-                            help='Number of lanes, default value is 1',
+                            help='Number of lanes',
                             type=int,
                             default=1)
-        parser.add_argument('--target',
-                            help='Set the compilation target',
-                            choices=['llvm'] + GPU_TARGETS,
-                            default='llvm')
         parser.add_argument('--cross_compile',
-                            help='Set to cross compile for ArmV8a with NEON',
+                            help='Cross compile for ArmV8a with NEON',
                             action='store_true',
                             default=False)
         parser.add_argument('--autotvm_log',
                             help='Path to an autotvm .log file, can speed up '
                                  'inference')
         parser.add_argument('--autoware_version',
-                            help='Set the targeted Autoware version',
+                            help='Targeted Autoware version',
                             choices=['ai', 'auto'],
                             default='auto')
 

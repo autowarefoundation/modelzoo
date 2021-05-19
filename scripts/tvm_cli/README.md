@@ -41,6 +41,8 @@ The output will consist of these file:
 - `inference_engine_tvm_config.hpp` contains declaration of a structure with
   configuration for the TVM runtime C++ API.
 
+The target device can be set with the `--target` parameter.
+
 ### Tuning a model in the model zoo
 
 ```bash
