@@ -23,6 +23,9 @@ namespace {{ ns }}
 {%- endfor %}
 
 tvm_utility::pipeline::InferenceEngineTVMConfig config {
+  .network_name = "{{ network_name }}",
+  .network_backend = "{{ network_backend }}",
+
   .network_module_path = "{{ network_module_path }}",
   .network_graph_path = "{{ network_graph_path }}",
   .network_params_path = "{{ network_params_path }}",
