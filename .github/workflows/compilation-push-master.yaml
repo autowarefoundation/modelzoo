@@ -18,8 +18,6 @@ jobs:
         os: [ubuntu-latest, ARM64]
     container:
       image: autoware/model-zoo-tvm-cli:bleedingedge
-      volumes:
-        - /tmp/artifacts:/tmp/artifacts
     steps:
       - name: Install LFS
         run: |
@@ -36,8 +34,10 @@ jobs:
           cp -r . /tmp
           cd /tmp
           ./scripts/tvm_cli/tvm_cli.py test
-          tar -czf networks-`uname -m`.tar.gz -C /tmp/neural_networks/`uname -m`/ .
-          mv networks-`uname -m`.tar.gz /tmp/artifacts
+          mkdir /__w/modelzoo/modelzoo/neural_networks
+          tar -C /tmp/neural_networks/`uname -m` \
+            -czf networks-`uname -m`.tar.gz \
+            /__w/modelzoo/modelzoo/neural_networks/
 
       - name: Save artifacts
         uses: jakejarvis/s3-sync-action@v0.5.1
@@ -47,4 +47,4 @@ jobs:
           AWS_S3_BUCKET: autoware-modelzoo
           AWS_ACCESS_KEY_ID: ${{ secrets.MODELZOO_S3_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
-          SOURCE_DIR: '/tmp/artifacts'
+          SOURCE_DIR: 'neural_networks'
