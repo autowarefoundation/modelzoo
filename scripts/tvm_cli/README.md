@@ -110,7 +110,6 @@ Here an example to build the image with default parameters:
 ```bash
 $ # From root of the model zoo repo
 $ ./scripts/tvm_cli/build.sh
-
 ...
 
 Successfully built 547afbbfd193
