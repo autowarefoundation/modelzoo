@@ -18,8 +18,14 @@ jobs:
         os: [ubuntu-latest, ARM64]
     container:
       image: autoware/model-zoo-tvm-cli:bleedingedge
-      volumes: /tmp/artifacts
+      volumes:
+        - /tmp/artifacts:/tmp/artifacts
     steps:
+      - name: Install LFS
+        run: |
+          apt-get update
+          apt-get install git-lfs
+
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -37,8 +43,8 @@ jobs:
         uses: jakejarvis/s3-sync-action@v0.5.1
         with:
           args: --acl public-read --follow-symlinks
-          env:
-            AWS_S3_BUCKET: autoware-modelzoo
-            AWS_ACCESS_KEY_ID: ${{ secrets.MODELZOO_S3_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
-            SOURCE_DIR: '/tmp/artifacts'
+        env:
+          AWS_S3_BUCKET: autoware-modelzoo
+          AWS_ACCESS_KEY_ID: ${{ secrets.MODELZOO_S3_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
+          SOURCE_DIR: '/tmp/artifacts'
