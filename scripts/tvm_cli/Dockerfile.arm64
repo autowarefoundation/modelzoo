@@ -28,6 +28,7 @@ RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
         wget && \
     rm -rf /var/lib/apt/lists/*
 
+#hadolint ignore=3059
 RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 && \
     update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 1 && \
     update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100

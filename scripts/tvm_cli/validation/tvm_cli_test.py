@@ -57,7 +57,7 @@ root_folder = path.join(MOUNT_PATH, 'neural_networks', os.uname().machine)
 @pytest.mark.parametrize('network_name', list(networks_to_compile))
 def test_tvm_cli(backend, network_name):
     # Create a directory for every model
-    output_folder = path.join(root_folder, backend, network_name)
+    output_folder = path.join(root_folder, network_name, backend)
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     config_path = networks_to_compile[network_name]
