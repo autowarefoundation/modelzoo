@@ -5,16 +5,7 @@ on:
 
 jobs:
 
-  setup-lfs-arm64:
-      runs-on: ARM64
-
-      steps:
-        - name: Install LFS
-          run: sudo apt-get install -y git-lfs
-
   tvm-cli-validate:
-      needs: setup-lfs-arm64
-
       runs-on: ${{ matrix.os }}
       strategy:
         matrix:
@@ -25,24 +16,17 @@ jobs:
 
       steps:
 
+        - name: Install LFS
+          run: |
+            apt-get update
+            apt-get install git-lfs
+
         - name: Checkout
           uses: actions/checkout@v2
           with:
             lfs: true
 
-        # workaround for https://github.com/actions/checkout/issues/270
-        - name: LFS pull and tvm_cli test
-          if: contains(matrix.os, 'ARM64')
-          run: |
-            apt update
-            apt install -y git-lfs
-            cp -r . /tmp
-            cd /tmp
-            git lfs pull
-            ./scripts/tvm_cli/tvm_cli.py test
-
         - name: tvm_cli test
-          if: contains(matrix.os, 'ubuntu-latest')
           run: |
             cp -r . /tmp
             cd /tmp

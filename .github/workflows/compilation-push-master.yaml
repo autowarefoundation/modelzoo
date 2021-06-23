@@ -8,6 +8,7 @@ on:
       - 'scripts/tvm_cli/**'
       - '**.onnx'
       - '**.pb'
+      - '.github/workflows/compilation-push-master.yaml'
 
 jobs:
   compile-push-bucket:
@@ -47,4 +48,5 @@ jobs:
           AWS_S3_BUCKET: autoware-modelzoo
           AWS_ACCESS_KEY_ID: ${{ secrets.MODELZOO_S3_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
+          AWS_REGION: us-east-2
           SOURCE_DIR: 'neural_networks'
