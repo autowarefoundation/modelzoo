@@ -30,23 +30,29 @@ jobs:
         with:
           lfs: true
 
-      - name: Generate artifacts
-        run: |
-          cp -r . /tmp
-          cd /tmp
-          ./scripts/tvm_cli/tvm_cli.py test
-          mkdir /__w/modelzoo/modelzoo/neural_networks
-          tar -C /tmp/neural_networks/`uname -m` \
-            -czf networks-`uname -m`.tar.gz \
-            /__w/modelzoo/modelzoo/neural_networks/
-
-      - name: Save artifacts
-        uses: jakejarvis/s3-sync-action@v0.5.1
-        with:
-          args: --acl public-read --follow-symlinks
+      - name: Generate and save artifacts
         env:
           AWS_S3_BUCKET: autoware-modelzoo
           AWS_ACCESS_KEY_ID: ${{ secrets.MODELZOO_S3_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
           AWS_REGION: us-east-2
-          SOURCE_DIR: 'neural_networks'
+        run: |
+          cp -r . /tmp
+          cd /tmp
+          ./scripts/tvm_cli/tvm_cli.py test
+          tar -C /tmp/neural_networks/`uname -m` \
+            -czf networks-`uname -m`.tar.gz .
+          pip install --quiet --no-cache-dir awscli==1.19.98
+          aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
+          ${AWS_ACCESS_KEY_ID}
+          ${AWS_SECRET_ACCESS_KEY}
+          ${AWS_REGION}
+          text
+          EOF
+          aws s3 cp networks-`uname -m`.tar.gz s3://autoware-modelzoo/ --profile s3-sync-action
+          aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
+          null
+          null
+          null
+          text
+          EOF
