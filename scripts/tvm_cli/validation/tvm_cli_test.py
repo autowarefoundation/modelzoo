@@ -8,24 +8,24 @@
 import os
 import shutil
 import subprocess
-import yaml
-import pytest
 from glob import glob
 from os import path
 import tempfile
 from pathlib import Path
+import yaml
+import pytest
 
 MOUNT_PATH = '/tmp'
 BACKENDS = ['llvm', 'vulkan']
 
-# Execute tvm_cli and check the return code
 def run_tvm_cli(config_path, output_folder, extra_run_args):
+    '''Execute tvm_cli and check the return code'''
     run_arg = [path.join(MOUNT_PATH, "./scripts/tvm_cli/tvm_cli.py"),
                'compile',
                '--config', config_path,
                '--output_path', output_folder]
     run_arg += extra_run_args
-    proc = subprocess.run(run_arg)
+    proc = subprocess.run(run_arg, check=True)
     assert proc.returncode == 0
 
     # Check if the files have been generated
@@ -46,8 +46,8 @@ for definition_file in definition_files:
     with open(definition_file, 'r') as yaml_file:
         yaml_dict = yaml.safe_load(yaml_file)
         if yaml_dict['enable_testing']:
-            network_name = definition_file.split(path.sep)[-3]
-            networks_to_compile[network_name] = definition_file
+            name = definition_file.split(path.sep)[-3]
+            networks_to_compile[name] = definition_file
 
 root_folder = path.join(MOUNT_PATH, 'neural_networks', os.uname().machine)
 
@@ -56,6 +56,7 @@ root_folder = path.join(MOUNT_PATH, 'neural_networks', os.uname().machine)
 @pytest.mark.parametrize('backend', BACKENDS)
 @pytest.mark.parametrize('network_name', list(networks_to_compile))
 def test_tvm_cli(backend, network_name):
+    '''Executes a test for each backend-network combination'''
     # Create a directory for every model
     output_folder = path.join(root_folder, network_name, backend)
     Path(output_folder).mkdir(parents=True, exist_ok=True)
@@ -70,6 +71,7 @@ def test_tvm_cli(backend, network_name):
                     reason='would cross-compile to itself')
 @pytest.mark.parametrize('network_name', list(networks_to_compile))
 def test_tvm_cli_cross_compile(network_name):
+    '''Executes a cross compilation test for each network'''
     # Create a directory for every model
     output_folder = tempfile.mkdtemp()
 

@@ -7,21 +7,22 @@
 
 import os
 import sys
+from os import path
+import importlib
 import onnx
 import yaml
-import tvm.relay.testing.tf as tf_testing
-import tvm.relay as relay
-from jinja2 import Environment, FileSystemLoader
-from tvm.contrib import cc
-from tvm import autotvm
 import tvm
-from os import path
+import tvm.relay.testing.tf as tf_testing
+import tvm.contrib.graph_runtime as runtime
+from tvm import relay
+from tvm import autotvm
+from tvm.contrib import cc
+from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
+from tvm.autotvm.graph_tuner import DPTuner, PBQPTuner
+from jinja2 import Environment, FileSystemLoader
 import pytest
 import tensorflow as tf
 import numpy as np
-import tvm.contrib.graph_runtime as runtime
-from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
-from tvm.autotvm.graph_tuner import DPTuner, PBQPTuner
 
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
 OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"
@@ -36,8 +37,8 @@ TARGETS_DEVICES = {
 }
 GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
 
-# Utility function: definition.yaml file processing
 def yaml_processing(config, info):
+    '''Utility function: definition.yaml file processing'''
     with open(config, 'r') as yml_file:
         yaml_dict = yaml.safe_load(yml_file)
         # Get path of model file
@@ -67,8 +68,8 @@ def yaml_processing(config, info):
             info['output_names'].append(str(output_elem['name']))
     return info
 
-# Utility function to load the model
 def get_network(info):
+    '''Utility function to load the model'''
     if info['model'].endswith('.onnx'):
         onnx_model = onnx.load(info['model'])
         mod, params = relay.frontend.from_onnx(onnx_model, info['input_dict'])
@@ -116,9 +117,11 @@ def get_network(info):
 
     return mod, params
 
-# This function checks the command-line arguments and reads the necessary info
-# from the .yaml file, it's used when the compile option is selected
 def compilation_preprocess(args):
+    '''
+    This function checks the command-line arguments and reads the necessary info
+    from the .yaml file, it's used when the compile option is selected
+    '''
     # 'info' is the output dictionary
     info = {}
 
@@ -156,8 +159,8 @@ def compilation_preprocess(args):
 
     return info
 
-# This functions compiles the model
 def compile_model(info):
+    '''This functions compiles the model'''
     mod, params = get_network(info)
 
     # Set compilation params
@@ -210,8 +213,8 @@ def compile_model(info):
     with open(output_param_path, 'wb') as param_file:
         param_file.write(relay.save_param_dict(params))
 
-# This function generates the config .hpp file.
 def generate_config_file(info):
+    '''This function generates the config .hpp file'''
     # Setup jinja template and write the config file
     root = path.dirname(path.abspath(__file__))
     templates_dir = path.join(root, 'templates')
@@ -242,9 +245,11 @@ def generate_config_file(info):
             output_list = info['output_list']
         ))
 
-# This function checks the command-line arguments and reads the necessary info
-# from the .yaml file, it's used when the tune option is selected
 def tuning_preprocess(args):
+    '''
+    This function checks the command-line arguments and reads the necessary info
+    from the .yaml file, it's used when the tune option is selected
+    '''
     # 'info' is the output dictionary
     info = {}
 
@@ -267,23 +272,20 @@ def tuning_preprocess(args):
     # Import the AutoTVM config file
     sys.path.append(os.path.dirname(os.path.abspath(args.autotvm_config)))
     autotvm_config_file = os.path.basename(args.autotvm_config)
-    import importlib
     info['cfg'] = importlib.import_module(autotvm_config_file[:-3])
 
     return info
 
-# This function performs the tuning of a model
 def tune_model(info):
+    '''This function performs the tuning of a model'''
     def tune_kernels(
         tasks,
-        target,
-        measure_option,
-        tuner,
-        n_trial,
-        early_stopping,
-        log_filename,
-        min_exec_graph_tuner=None
+        tuning_opt
     ):
+        tuner = tuning_opt.tuner
+        n_trial = tuning_opt.n_trial
+        early_stopping = tuning_opt.early_stopping
+
         # Overwrite AutoTVM_config contents if the user provides the
         # corresponding arguments
         if info['tuner'] is not None:
@@ -297,7 +299,7 @@ def tune_model(info):
             prefix = "[Task %2d/%2d] " % (i + 1, len(tasks))
 
             # create tuner
-            if tuner == "xgb" or tuner == "xgb-rank":
+            if tuner in ('xgb', 'xgb-rank'):
                 tuner_obj = XGBTuner(tsk, loss_type="rank")
             elif tuner == "ga":
                 tuner_obj = GATuner(tsk, pop_size=100)
@@ -313,12 +315,12 @@ def tune_model(info):
             tuner_obj.tune(
                 n_trial=tsk_trial,
                 early_stopping=early_stopping,
-                measure_option=measure_option,
+                measure_option=tuning_opt.measure_option,
                 callbacks=[
                     autotvm.callback.progress_bar(tsk_trial, prefix=prefix),
                     autotvm.callback.log_to_file(path.join(
                         info['output_path'],
-                        log_filename)),
+                        tuning_opt.log_filename)),
                 ],
             )
 
@@ -417,6 +419,7 @@ if __name__ == '__main__':
     import argparse
 
     def compile():
+        '''Compiles a model using TVM'''
         parser = argparse.ArgumentParser(
             description='Compile a model using TVM',
             usage='''tvm_cli compile [<args>]''',
@@ -470,6 +473,7 @@ if __name__ == '__main__':
         return 0
 
     def tune():
+        '''Tunes a model using AutoTVM'''
         parser = argparse.ArgumentParser(
             description='Tune a model using AutoTVM',
             usage='''tvm_cli tune [<args>]''')
@@ -513,25 +517,26 @@ if __name__ == '__main__':
         tune_model(info)
 
     def test():
+        '''Launches the validation script'''
         parser = argparse.ArgumentParser(
             description='Launch the validation script',
             usage='''tvm_cli test [-h]''')
         parser.parse_args(sys.argv[2:])
         return pytest.main(['-v'])
 
-    parser = argparse.ArgumentParser(
+    main_parser = argparse.ArgumentParser(
         description='Compile model and configuration file (TVM)',
         usage='''<command> [<args>]
 Commands:
     compile    Compile a model using TVM
     tune       Tune a model using AutoTVM
     test       Launch the validation script''')
-    parser.add_argument('command', help='Subcommand to run')
-    parsed_args = parser.parse_args(sys.argv[1:2])
-    if parsed_args.command not in locals():
+    main_parser.add_argument('command', help='Subcommand to run')
+    main_parsed_args = main_parser.parse_args(sys.argv[1:2])
+    if main_parsed_args.command not in locals():
         print('Unrecognized command')
-        parser.print_help()
+        main_parser.print_help()
         exit(1)
 
     # Invoke method with same name as the argument passed
-    exit(locals()[parsed_args.command]())
+    exit(locals()[main_parsed_args.command]())

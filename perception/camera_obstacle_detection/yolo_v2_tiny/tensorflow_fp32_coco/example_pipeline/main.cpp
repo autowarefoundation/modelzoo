@@ -228,8 +228,8 @@ int main(int argc, char const *argv[]) {
 
         // Transform log-space predicted coordinates to absolute space + offset
         // Transform bounding box position from offset to absolute (ratio)
-        auto x = (sigmoid(box_x) + j) / l_w;
-        auto y = (sigmoid(box_y) + i) / l_h;
+        auto x_coord = (sigmoid(box_x) + j) / l_w;
+        auto y_coord = (sigmoid(box_y) + i) / l_h;
 
         // Transform bounding box height and width from log to absolute space
         auto w = anchor_w * exp(box_w) / l_w;
@@ -267,8 +267,8 @@ int main(int argc, char const *argv[]) {
           // and back to original size
           float original_w = w * NETWORK_INPUT_WIDTH;
           float original_h = h * NETWORK_INPUT_HEIGHT;
-          float original_x = x * NETWORK_INPUT_WIDTH - original_w / 2;
-          float original_y = y * NETWORK_INPUT_HEIGHT - original_h / 2;
+          float original_x = x_coord * NETWORK_INPUT_WIDTH - original_w / 2;
+          float original_y = y_coord * NETWORK_INPUT_HEIGHT - original_h / 2;
 
           // draw rectangle on image
           cv::rectangle(
