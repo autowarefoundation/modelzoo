@@ -104,10 +104,15 @@ fi
 
 # Build image with all dependencies and tvm_cli
 export DOCKER_CLI_EXPERIMENTAL=enabled
+# shellcheck disable=SC2086
+# Disabling this shellcheck is required to prevent a warning about double quoting the
+# EXTRA_BUILD_ARGS variable. This variable can't be double quoted because in some cases
+# the variable itself might be empty (""), causing an error when the script tries to
+# run the "docker buildx build ..." command
 docker buildx build -f "${SCRIPT_PATH}"/"${DOCKER_FILE}" \
             --build-arg FROM_ARG="${FROM_ARG}" \
             -t "${IMAGE_NAME}":"${TAG_NAME}" \
-            --platform ${TARGET_PLATFORM} \
+            --platform "${TARGET_PLATFORM}" \
             --progress plain \
             --load \
             ${EXTRA_BUILD_ARGS} \

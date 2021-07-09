@@ -75,13 +75,15 @@ mkdir -p ${TVM_BUILD_DIR}
 cp ${TVM_BASE_DIR}/cmake/config.cmake ${TVM_BUILD_DIR}
 
 # turn on features
-echo "set(INSTALL_DEV TRUE)" >> ${TVM_BUILD_CONFIG}
-echo "set(USE_LLVM llvm-config-8)" >> ${TVM_BUILD_CONFIG}
-echo "set(USE_SORT ON)" >> ${TVM_BUILD_CONFIG}
-echo "set(USE_GRAPH_RUNTIME ON)" >> ${TVM_BUILD_CONFIG}
-echo "set(USE_BLAS openblas)" >> ${TVM_BUILD_CONFIG}
-echo "set(USE_OPENCL ON)" >> ${TVM_BUILD_CONFIG}
-echo "set(USE_VULKAN ON)" >> ${TVM_BUILD_CONFIG}
+{
+    echo "set(INSTALL_DEV TRUE)"
+    echo "set(USE_LLVM llvm-config-8)"
+    echo "set(USE_SORT ON)"
+    echo "set(USE_GRAPH_RUNTIME ON)"
+    echo "set(USE_BLAS openblas)"
+    echo "set(USE_OPENCL ON)"
+    echo "set(USE_VULKAN ON)"
+} >> ${TVM_BUILD_CONFIG}
 if [[ -d "/usr/local/cuda" ]]; then
     echo "set(USE_CUDA ON)" >> ${TVM_BUILD_CONFIG}
 fi
