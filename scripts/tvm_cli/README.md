@@ -61,8 +61,8 @@ $ docker run \
 
 The output will consist of a .log file whose name can be specified in the
 AutoTVM_config.py file. Examples of this file are provided in
-`/modelzoo/AutoTVM_config_example_cuda.py` and
-`/modelzoo/AutoTVM_config_example_llvm.py`
+`/modelzoo/scripts/tvm_cli/AutoTVM_config_example_cuda.py` and
+`/modelzoo/scripts/tvm_cli/AutoTVM_config_example_llvm.py`
 
 ## Validation script
 
