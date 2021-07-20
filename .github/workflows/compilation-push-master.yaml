@@ -49,7 +49,8 @@ jobs:
           ${AWS_REGION}
           text
           EOF
-          aws s3 cp networks-`uname -m`.tar.gz s3://autoware-modelzoo/ --profile s3-sync-action
+          aws s3 cp networks-`uname -m`.tar.gz s3://autoware-modelzoo/ \
+            --profile s3-sync-action --acl public-read
           aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
           null
           null
