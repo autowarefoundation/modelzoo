@@ -15,41 +15,41 @@
 
 #include "tvm_utility/pipeline{{ header_extension }}"
 
-#ifndef INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef {{ network_name.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define {{ network_name.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_
 {% for ns in namespace %}
 namespace {{ ns }}
 {
 {%- endfor %}
 
-tvm_utility::pipeline::InferenceEngineTVMConfig config {
-  .network_name = "{{ network_name }}",
-  .network_backend = "{{ network_backend }}",
+static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
+  "{{ network_name }}",  // network_name
+  "{{ network_backend }}",  // network_backend
 
-  .network_module_path = "{{ network_module_path }}",
-  .network_graph_path = "{{ network_graph_path }}",
-  .network_params_path = "{{ network_params_path }}",
+  "{{ network_module_path }}",  //network_module_path
+  "{{ network_graph_path }}",  // network_graph_path
+  "{{ network_params_path }}",  // network_params_path
 
-  .tvm_dtype_code = {{ tvm_dtype_code }},
-  .tvm_dtype_bits = {{ tvm_dtype_bits }},
-  .tvm_dtype_lanes = {{ tvm_dtype_lanes }},
+  {{ tvm_dtype_code }},  // tvm_dtype_code
+  {{ tvm_dtype_bits }},  // tvm_dtype_bits
+  {{ tvm_dtype_lanes }},  // tvm_dtype_lanes
 
-  .tvm_device_type = {{ tvm_device_type }},
-  .tvm_device_id = {{ tvm_device_id }},
+  {{ tvm_device_type }},  // tvm_device_type
+  {{ tvm_device_id }},  // tvm_device_id
 
-  .network_inputs = {
+  {
   {%- for node in input_list %}
     {"{{ node['name'] }}", {{ '{' }}{{ node['shape']|join(', ') }}{{ '}}' }}{{ ',' if not loop.last }}
   {%- endfor %}
-  },
+  },  // network_inputs
 
-  .network_outputs = {
+  {
   {%- for node in output_list %}
     {"{{ node['name'] }}", {{ '{' }}{{ node['shape']|join(', ') }}{{ '}}' }}{{ ',' if not loop.last }}
   {%- endfor %}
-  }
+  }  // network_outputs
 };
 {% for ns in namespace|reverse %}
 }  // namespace {{ ns }}
 {%- endfor %}
-#endif  // INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#endif  // {{ network_name.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
