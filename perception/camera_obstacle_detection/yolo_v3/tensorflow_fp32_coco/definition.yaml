@@ -1,0 +1,43 @@
+version: 1
+enable_testing: true
+network:
+  filename: ./model_files/yolov3-416.onnx
+  framework: ONNX
+  provenance: ./README.md
+  training: COCO dataset, https://pjreddie.com/darknet/yolo/
+  model_license: Apache-2.0
+  data_license: CC-BY-4.0
+network_parameters:
+  datatype: float32
+  input_nodes:
+    - name: input
+      description: Camera Image RGB
+      shape:
+        - 1
+        - 416
+        - 416
+        - 3
+  output_nodes:
+    - name: conv2d_58
+      description:
+      shape:
+        - 1
+        - 13
+        - 13
+        - 255
+    
+    - name: conv2d_66
+      description:
+      shape:
+        - 1
+        - 26
+        - 26
+        - 255
+
+    - name: conv2d_74
+      description:
+      shape:
+        - 1
+        - 52
+        - 52
+        - 255
