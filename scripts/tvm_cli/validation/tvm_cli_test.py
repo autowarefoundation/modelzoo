@@ -43,7 +43,7 @@ definition_files = glob(MOUNT_PATH + '/**/definition.yaml', recursive=True)
 # the files which have enable_testing: true
 networks_to_compile = {}
 for definition_file in definition_files:
-    with open(definition_file, 'r') as yaml_file:
+    with open(definition_file, 'r', encoding='utf-8') as yaml_file:
         yaml_dict = yaml.safe_load(yaml_file)
         if yaml_dict['enable_testing']:
             name = definition_file.split(path.sep)[-3]

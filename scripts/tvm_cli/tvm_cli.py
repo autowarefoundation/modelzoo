@@ -39,7 +39,7 @@ GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
 
 def yaml_processing(config, info):
     '''Utility function: definition.yaml file processing'''
-    with open(config, 'r') as yml_file:
+    with open(config, 'r', encoding='utf-8') as yml_file:
         yaml_dict = yaml.safe_load(yml_file)
         # Get path of model file
         info['model'] = yaml_dict['network']['filename']
@@ -206,7 +206,7 @@ def compile_model(info):
         lib.export_library(output_model_path)
 
     print('Writing graph to', output_graph_path)
-    with open(output_graph_path, 'w') as graph_file:
+    with open(output_graph_path, 'w', encoding='utf-8') as graph_file:
         graph_file.write(graph)
 
     print('Writing weights to', output_param_path)
@@ -224,7 +224,7 @@ def generate_config_file(info):
     filename = path.join(info['output_path'], OUTPUT_CONFIG_FILENAME)
 
     print('Writing pipeline configuration to', filename)
-    with open(filename, 'w') as fh:
+    with open(filename, 'w', encoding='utf-8') as fh:
         fh.write(template.render(
             namespace = info['namespace'],
             header_extension = info['header_extension'],
@@ -282,9 +282,9 @@ def tune_model(info):
         tasks,
         tuning_opt
     ):
-        tuner = tuning_opt.tuner
-        n_trial = tuning_opt.n_trial
-        early_stopping = tuning_opt.early_stopping
+        tuner = tuning_opt['tuner']
+        n_trial = tuning_opt['n_trial']
+        early_stopping = tuning_opt['early_stopping']
 
         # Overwrite AutoTVM_config contents if the user provides the
         # corresponding arguments
@@ -296,7 +296,7 @@ def tune_model(info):
             early_stopping = info['early_stopping']
 
         for i, tsk in enumerate(reversed(tasks)):
-            prefix = "[Task %2d/%2d] " % (i + 1, len(tasks))
+            prefix = f"[Task {i + 1:2d}/{len(tasks):2d}] "
 
             # create tuner
             if tuner in ('xgb', 'xgb-rank'):
@@ -315,12 +315,12 @@ def tune_model(info):
             tuner_obj.tune(
                 n_trial=tsk_trial,
                 early_stopping=early_stopping,
-                measure_option=tuning_opt.measure_option,
+                measure_option=tuning_opt['measure_option'],
                 callbacks=[
                     autotvm.callback.progress_bar(tsk_trial, prefix=prefix),
                     autotvm.callback.log_to_file(path.join(
                         info['output_path'],
-                        tuning_opt.log_filename)),
+                        tuning_opt['log_filename'])),
                 ],
             )
 
@@ -360,7 +360,7 @@ def tune_model(info):
 
     # run tuning tasks
     print("Tuning...")
-    tune_kernels(tasks, **tuning_opt)
+    tune_kernels(tasks, tuning_opt)
     if info['target'].startswith('llvm'):
         opt_sch_file = tuning_opt['log_filename'][:-4] + '_graph_opt.log'
         tune_graph(
@@ -412,8 +412,8 @@ def tune_model(info):
                                                   number=10,
                                                   repeat=60)
             prof_res = np.array(ftimer().results) * 1000
-            print("Mean inference time (std dev): %.2f ms (%.2f ms)"
-                  % (np.mean(prof_res), np.std(prof_res)))
+            print(f"Mean inference time (std dev): "
+                  f"{np.mean(prof_res):.2f} ms ({np.std(prof_res):.2f} ms)")
 
 if __name__ == '__main__':
     import argparse
