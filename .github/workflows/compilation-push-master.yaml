@@ -42,6 +42,7 @@ jobs:
           ./scripts/tvm_cli/tvm_cli.py test
           tar -C /tmp/neural_networks/`uname -m` \
             -czf networks-`uname -m`.tar.gz .
+          md5sum networks-`uname -m`.tar.gz | cut -d ' ' -f 1 >> networks-`uname -m`.md5
           pip install --quiet --no-cache-dir awscli==1.19.98
           aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
           ${AWS_ACCESS_KEY_ID}
@@ -49,7 +50,10 @@ jobs:
           ${AWS_REGION}
           text
           EOF
-          aws s3 cp networks-`uname -m`.tar.gz s3://autoware-modelzoo/ \
+          aws s3 cp . s3://autoware-modelzoo/ \
+            --recursive --exclude "*" \
+            --include "networks-`uname -m`.tar.gz" \
+            --include "networks-`uname -m`.md5" \
             --profile s3-sync-action --acl public-read
           aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
           null
