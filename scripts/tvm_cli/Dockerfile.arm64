@@ -85,6 +85,7 @@ RUN true
 COPY templates /tvm_cli/templates
 # hadolint ignore=DL3044
 ENV PATH="/tvm_cli:${PATH}"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 ENTRYPOINT [ "tvm_cli"]
 CMD ["-h"]
 
