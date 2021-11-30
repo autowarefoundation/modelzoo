@@ -2,77 +2,28 @@ ARG FROM_ARG
 # hadolint ignore=DL3006
 FROM $FROM_ARG
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
-# Install dependencies
 # hadolint ignore=DL3008
 RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get -y install --no-install-recommends \
-        software-properties-common && \
-    rm -rf /var/lib/apt/lists/*
-
-# hadolint ignore=DL3008
-RUN add-apt-repository ppa:ubuntu-toolchain-r/test && \
-    apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-        build-essential \
-        gfortran-9 \
-        libhdf5-dev \
-        libopencv-dev \
-        libprotobuf-dev \
-        protobuf-compiler \
-        python3-opencv \
-        ca-certificates ninja-build git python \
-        cmake libopenblas-dev g++ llvm-8 llvm-8-dev clang-9 \
-        python3.8 python3.8-dev python3-setuptools python3-pip antlr4 \
-        wget && \
+      build-essential \
+      libopencv-dev \
+      python3-dev \
+      python3-pip \
+      python3-opencv && \
     rm -rf /var/lib/apt/lists/*
 
-#hadolint ignore=3059
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3 10 && \
-    update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 1 && \
-    update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
+# Use linaro binaries of tensorflow
+ENV PIP_EXTRA_INDEX_URL=https://snapshots.linaro.org/ldcg/python-cache/
 
 # hadolint ignore=DL3013
-RUN pip3 install --upgrade --no-cache-dir \
-      pip \
-      setuptools && \
-    pip3 install --upgrade --no-cache-dir \
-      "numpy<1.19.0" \
-      cython \
-      future \
+RUN pip3 install --no-cache-dir --upgrade pip && \
+    pip3 install --no-cache-dir \
       jinja2 \
-      protobuf \
+      onnx \
       pytest \
       pyyaml \
-      wheel && \
-    pip3 install --upgrade --no-cache-dir --no-deps keras_preprocessing
-
-# build and install onnx
-WORKDIR /tmp/onnx
-RUN git clone -b v1.7.0 https://github.com/onnx/onnx.git . && \
-    git submodule update --init --recursive && \
-    python3 setup.py install && \
-    rm -rf ../onnx
-
-# install bazel
-WORKDIR /tmp
-# hadolint ignore=DL3047
-RUN wget https://github.com/bazelbuild/bazel/releases/download/3.4.0/bazel-3.4.0-linux-arm64 && \
-    ln -s /tmp/bazel-3.4.0-linux-arm64 /usr/bin/bazel && \
-    chmod +x /tmp/bazel-3.4.0-linux-arm64 && /tmp/bazel-3.4.0-linux-arm64
-
-# build and install tensorflow
-WORKDIR /tmp/tensorflow
-RUN git clone --depth 1 -b v2.3.0 https://github.com/tensorflow/tensorflow.git . && \
-    (yes "" || true ) | ./configure && \
-    bazel build --config=noaws --config=monolithic --local_cpu_resources=32 \
-        //tensorflow/tools/pip_package:build_pip_package && \
-    ./bazel-bin/tensorflow/tools/pip_package/build_pip_package \
-        /tmp/tensorflow_pkg && \
-    pip3 install --no-cache-dir \
-        /tmp/tensorflow_pkg/tensorflow-2.3.0-cp38-cp38-linux_aarch64.whl && \
-    rm -rf ../tensorflow ../tensorflow_pkg ~/.cache
+      "numpy<1.20.0,>=1.19.0" \
+      "tensorflow-aarch64==2.7.*"
 
 COPY install_tvm.sh /tmp/install_tvm.sh
 RUN /tmp/install_tvm.sh
@@ -88,6 +39,12 @@ ENV PATH="/tvm_cli:${PATH}"
 ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/lib/"
 ENTRYPOINT [ "tvm_cli"]
 CMD ["-h"]
+
+# Work around opencv issue: https://github.com/opencv/opencv/issues/14884
+ENV LD_PRELOAD=/lib/aarch64-linux-gnu/libgomp.so.1
+
+# Remove lavapipe
+RUN rm -f /usr/share/vulkan/icd.d/lvp_icd.aarch64.json
 
 ENV NVIDIA_VISIBLE_DEVICES all
 ENV NVIDIA_DRIVER_CAPABILITIES compute,graphics

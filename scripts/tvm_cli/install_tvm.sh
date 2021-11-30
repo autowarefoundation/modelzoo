@@ -15,7 +15,7 @@
 
 set -e
 
-TVM_VERSION_TAG="v0.7"
+TVM_VERSION="v0.8"
 TVM_BASE_DIR="/tmp/tvm"
 TVM_BUILD_DIR="${TVM_BASE_DIR}/build"
 TVM_BUILD_CONFIG="${TVM_BUILD_DIR}/config.cmake"
@@ -67,8 +67,8 @@ pip3 install mypy orderedset "antlr4-python3-runtime>=4.7,<4.8" \
   psutil "xgboost>=1.2.0,<1.3.0" tornado cython
 
 # clone tvm and create build directory
-git clone --branch ${TVM_VERSION_TAG} --recursive \
-    https://github.com/apache/incubator-tvm ${TVM_BASE_DIR}
+git clone --branch ${TVM_VERSION} --recursive \
+    https://github.com/apache/tvm ${TVM_BASE_DIR}
 mkdir -p ${TVM_BUILD_DIR}
 
 # copy a default configuration file

@@ -83,7 +83,7 @@ int main(int argc, char const *argv[]) {
 
   // Create tvm runtime module
   tvm::runtime::Module runtime_mod =
-      (*tvm::runtime::Registry::Get("tvm.graph_runtime.create"))(
+      (*tvm::runtime::Registry::Get("tvm.graph_executor.create"))(
           json_data, mod, (int)TVM_DEVICE_TYPE, TVM_DEVICE_ID);
 
   // load parameters
