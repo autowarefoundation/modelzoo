@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+// Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
 //
 // SPDX-License-Identifier: Apache-2.0
 //
@@ -60,6 +60,17 @@
 #define DISPLAY_WINDOW_NAME "YOLO Output"
 
 int main(int argc, char const *argv[]) {
+  bool save_as_image = false;
+
+  if (argc == 2) {
+    save_as_image = true;
+  } else if (argc > 2) {
+    std::cerr << "Too many arguments have been provided. Please use "
+      << "only one argument to save the result of the pipeline as "
+      << "an image, or none to display it to an X11 window." << std::endl;
+    return 1;
+  }
+
   // load compiled functions
   tvm::runtime::Module mod =
       tvm::runtime::Module::LoadFromFile(network_module_path);
@@ -289,12 +300,21 @@ int main(int argc, char const *argv[]) {
     }
   }
 
-  // show in a pop up window the detection results
-  cv::namedWindow(DISPLAY_WINDOW_NAME, cv::WINDOW_AUTOSIZE);
-  cv::imshow(DISPLAY_WINDOW_NAME, image);
+  if (save_as_image) {
+    // save the detection results as an image
+    try {
+      cv::imwrite(argv[1], image);
+    } catch(cv::Exception& e) {
+      std::cerr << "An error has occurred while saving to file: " << e.err << std::endl;
+    }
+  } else {
+    // show in a pop up window the detection results
+    cv::namedWindow(DISPLAY_WINDOW_NAME, cv::WINDOW_AUTOSIZE);
+    cv::imshow(DISPLAY_WINDOW_NAME, image);
 
-  // wait for user to close the window
-  cv::waitKey(0);
+    // wait for user to close the window
+    cv::waitKey(0);
+  }
 
   // usually the detection results would be filtered again by a non-maximum
   // supression algorithm. It is omitted here for simplicity.
