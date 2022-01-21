@@ -52,23 +52,33 @@ $ cp ${MODEL_DIR}/model_files/labels.txt ${MODEL_DIR}/example_pipeline/build/
 $ cp ${MODEL_DIR}/model_files/anchors.csv ${MODEL_DIR}/example_pipeline/build/
 ```
 
-run the detection pipeline inside a docker container. X draw calls are forwarded
-to the host so the detection results can be displayed in a X11 window.
-
-```bash
-$ docker run \
-    -it --rm \
-    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-    -v ${HOME}/.Xauthority:${HOME}/.Xauthority:rw \
-    -e XAUTHORITY=${HOME}/.Xauthority \
-    -e DISPLAY=$DISPLAY \
-    --net=host \
-    -v ${MODEL_DIR}:${MODEL_DIR} \
-    -w ${MODEL_DIR}/example_pipeline/build \
-    --entrypoint "" \
-    autoware/model-zoo-tvm-cli:latest \
-        ./example_pipeline
-```
+run the detection pipeline inside a docker container. The output result can be obtained in two ways:
+- **Save as an image**: saves the result of the pipeline as an image file in the build directory, the filename `output.jpg` can be changed in the command if needed:
+    ```bash
+    $ docker run \
+        -it --rm \
+        --net=host \
+        -v ${MODEL_DIR}:${MODEL_DIR} \
+        -w ${MODEL_DIR}/example_pipeline/build \
+        --entrypoint "" \
+        autoware/model-zoo-tvm-cli:latest \
+            ./example_pipeline output.jpg
+    ```
+- **Display in a X11 window**: X draw calls are forwarded to the host so the detection results can be displayed in a X11 window.
+    ```bash
+    $ docker run \
+        -it --rm \
+        -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+        -v ${HOME}/.Xauthority:${HOME}/.Xauthority:rw \
+        -e XAUTHORITY=${HOME}/.Xauthority \
+        -e DISPLAY=$DISPLAY \
+        --net=host \
+        -v ${MODEL_DIR}:${MODEL_DIR} \
+        -w ${MODEL_DIR}/example_pipeline/build \
+        --entrypoint "" \
+        autoware/model-zoo-tvm-cli:latest \
+            ./example_pipeline
+    ```
 
 For more information about getting the TVM docker image, see the TVM CLI
 [documentation](../../../../scripts/tvm_cli/README.md).
