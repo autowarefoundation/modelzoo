@@ -20,20 +20,20 @@ jobs:
      - name: Checkout
        uses: actions/checkout@v2
 
-      - name: Linting
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip
-          pip install pylint
-          find . -name "*.py" | xargs pylint \
-            --disable=import-error \
-            --disable=invalid-name \
-            --disable=missing-module-docstring \
-            --disable=redefined-builtin \
-            --disable=too-many-locals \
-            --disable=too-many-statements \
-            --disable=broad-except \
-            --disable=consider-using-sys-exit
+     - name: Linting
+       run: |
+         sudo apt-get update
+         sudo apt-get install -y python3-pip
+         pip install pylint
+         find . -name "*.py" | xargs pylint \
+           --disable=import-error \
+           --disable=invalid-name \
+           --disable=missing-module-docstring \
+           --disable=redefined-builtin \
+           --disable=too-many-locals \
+           --disable=too-many-statements \
+           --disable=broad-except \
+           --disable=consider-using-sys-exit
 
   cpp-lint:
     runs-on: ubuntu-latest
