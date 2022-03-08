@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -49,7 +49,7 @@ for definition_file in definition_files:
             name = definition_file.split(path.sep)[-3]
             networks_to_compile[name] = definition_file
 
-root_folder = path.join(MOUNT_PATH, 'neural_networks', os.uname().machine)
+root_folder = path.join(MOUNT_PATH, 'neural_networks')
 
 # Parameterizing the test_tvm_cli function, we generate separate tests for
 # every .yaml file: one for each target backend.
@@ -58,7 +58,8 @@ root_folder = path.join(MOUNT_PATH, 'neural_networks', os.uname().machine)
 def test_tvm_cli(backend, network_name):
     '''Executes a test for each backend-network combination'''
     # Create a directory for every model
-    output_folder = path.join(root_folder, network_name, backend)
+    dir_name = '-'.join([network_name, os.uname().machine, backend])
+    output_folder = path.join(root_folder, dir_name)
     Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     config_path = networks_to_compile[network_name]
