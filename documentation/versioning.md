@@ -39,3 +39,11 @@ An `:X.Y.Z` tag of the docker image is created on all increments of the version 
 
 An `X.Y.0-date` version of the models artifacts is created on increments of the X and Y version numbers.
 With `date` being formatted as `YYYYMMDD`.
+
+## Model versioning
+
+The model descriptors contain the version of the repository.
+It can be used by the code doing the inference to check against known working versions.
+
+*Note*: the version is taken from git while compiling the models.
+In case the models are compiled from a non-git directory, the version defaults to "0.0.0".

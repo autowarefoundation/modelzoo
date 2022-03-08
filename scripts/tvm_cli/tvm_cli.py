@@ -9,6 +9,7 @@ import os
 import sys
 from os import path
 import importlib
+import subprocess
 import onnx
 import yaml
 import tvm
@@ -157,6 +158,28 @@ def compilation_preprocess(args):
         info['namespace'] = path.sep.join(namespaces[-4:])
         info['network_name'] = namespaces[-2]
 
+    # Get version information from the most recent tag.
+    # Default to 0.0.0 when the git tag information can't be accessed.
+    info['modelzoo_version'] = [0, 0, 0]
+    modelzoo_rootdir = path.abspath(path.dirname(__file__) + "/../../")
+    if path.isdir(path.join(modelzoo_rootdir, '.git')):
+        cmd = 'git describe --tags --match [0-9]*'.split()
+        try:
+            version = subprocess.check_output(cmd).decode().strip().split('-', maxsplit=1)[0]
+            version = version.split('.')
+            if len(version) == 3:
+                info['modelzoo_version'] = version
+            else:
+                print(
+                    f"Unexpected git tag, descriptor version defaults to "
+                    f"{info['modelzoo_version']}"
+                )
+        except subprocess.CalledProcessError:
+            print(
+                f"No git tag information, descriptor version defaults to "
+                f"{info['modelzoo_version']}"
+            )
+
     return info
 
 def compile_model(info):
@@ -228,6 +251,7 @@ def generate_config_file(info):
         fh.write(template.render(
             namespace = info['namespace'],
             header_extension = info['header_extension'],
+            modelzoo_version = info['modelzoo_version'],
             network_name = info['network_name'],
             network_backend = info['target'],
             network_module_path = path.join('.',
