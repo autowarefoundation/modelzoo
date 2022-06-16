@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# Copyright 2020-2021 Autoware Foundation. All rights reserved.
+# Copyright 2020-2022 Autoware Foundation. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ TARGET_PLATFORM="arm64"
 if [[ $(uname -a) == *"x86_64"* ]]; then
     TARGET_PLATFORM="amd64"
 fi
-CUDA_ENABLED="false"
 CI_BUILD="false"
 
 function usage() {
@@ -47,7 +46,7 @@ eval set -- "$OPTS"
 while true; do
   case $1 in
     -c|--cuda)
-      CUDA_ENABLED="true"
+      FROM_ARG="nvidia/cuda:11.6.2-devel-ubuntu20.04"
       shift 1
       ;;
     -h|--help)
@@ -84,13 +83,6 @@ while true; do
       ;;
   esac
 done
-
-if [ "$CUDA_ENABLED" == "true" ]; then
-  FROM_ARG="nvidia/cuda-arm64:11.2.1-devel-ubuntu20.04"
-  if [[ "${TARGET_PLATFORM}" == "amd64" ]]; then
-    FROM_ARG="nvidia/cuda:11.0-devel-ubuntu20.04"
-  fi
-fi
 
 SCRIPT_PATH="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
 

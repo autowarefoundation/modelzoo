@@ -1,0 +1,42 @@
+name: Docker image architecture bundling
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        required: false
+        default: 'autoware/model-zoo-tvm-cli'
+        type: string
+      tag_name:
+        required: false
+        default: 'latest'
+        type: string
+    secrets:
+      DKR_USR:
+        required: true
+      DKR_PASS:
+        required: true
+
+jobs:
+  arch-bundle:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: ${{ inputs.image_name }}
+      TAG_NAME: ${{ inputs.tag_name }}
+    steps:
+      - name: Manifest build and push
+        run: |
+          docker login -u "${{ secrets.DKR_USR }}" -p "${{ secrets.DKR_PASS }}"
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          docker manifest create $IMAGE_NAME:$TAG_NAME --amend $IMAGE_NAME:$TAG_NAME-amd64 --amend $IMAGE_NAME:$TAG_NAME-arm64
+          docker manifest push $IMAGE_NAME:$TAG_NAME
+
+      - name: Manifest build and push cuda
+        run: |
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          docker manifest create $IMAGE_NAME:$TAG_NAME-cuda --amend $IMAGE_NAME:$TAG_NAME-cuda-amd64 --amend $IMAGE_NAME:$TAG_NAME-cuda-arm64
+          docker manifest push $IMAGE_NAME:$TAG_NAME-cuda
+
+      - name: Docker logout
+        if: ${{ always() }}
+        run: docker logout
