@@ -1,0 +1,29 @@
+name: Latest build and upload
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'scripts/tvm_cli/**'
+      - '**.onnx'
+      - '**.pb'
+      - '**/definition.yaml'
+
+jobs:
+  build-push-docker:
+    if: github.repository_owner == 'autowarefoundation'
+    uses: ./.github/workflows/reusable-build-upload-docker.yaml
+    secrets: inherit
+
+  docker-arch-bundle:
+    if: github.repository_owner == 'autowarefoundation'
+    needs: build-push-docker
+    uses: ./.github/workflows/reusable-bundle-docker.yaml
+    secrets: inherit
+
+  compile-push-models:
+    if: github.repository_owner == 'autowarefoundation'
+    needs: docker-arch-bundle
+    uses: ./.github/workflows/reusable-compile-upload-models.yaml
+    secrets: inherit

@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 #
-# Copyright (c) 2020-2021, Arm Limited and Contributors. All rights reserved.
+# Copyright (c) 2020-2022, Arm Limited and Contributors. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -31,7 +31,7 @@ OUTPUT_CONFIG_FILENAME = "inference_engine_tvm_config.hpp"
 
 TARGETS_DEVICES = {
     'llvm':'kDLCPU',
-    'cuda':'kDLGPU',
+    'cuda':'kDLCUDA',
     'opencl':'kDLOpenCL',
     'vulkan':'kDLVulkan',
 }

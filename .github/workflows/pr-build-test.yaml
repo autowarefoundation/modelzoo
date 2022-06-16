@@ -1,0 +1,79 @@
+name: PR build and test
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tvm_cli/**'
+      - '**.onnx'
+      - '**.pb'
+      - '**/definition.yaml'
+
+jobs:
+  setup-workspace:
+    runs-on: ARM64
+    steps:
+      # https://github.com/actions/checkout/issues/211
+      - name: Change permission of workspace
+        run: |
+          sudo chown -R $USER:$USER ${{ github.workspace }}
+
+      # do not "system prune" to avoid disrupting autoware images on the same runner
+      # sync because of https://github.com/moby/moby/issues/36573
+      - name: Prune docker
+        run: |
+          docker rmi $(docker image ls -aq autoware/model-zoo-tvm-cli) || true
+          sudo sync
+
+  build-docker:
+    needs: setup-workspace
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ARM64]
+        name: [no-cuda, cuda]
+        include:
+        - name: no-cuda
+          extra-params: ""
+          tag-suffix: ""
+        - name: cuda
+          extra-params: -c
+          tag-suffix: -cuda
+    env:
+      IMAGE_NAME: autoware/model-zoo-tvm-cli
+      TAG_NAME: latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Image build
+        run: |
+          ./scripts/tvm_cli/build.sh -i "$IMAGE_NAME" -t "$TAG_NAME${{ matrix.tag-suffix }}" --ci ${{ matrix.extra-params }}
+
+  tvm-cli-validate:
+    needs: build-docker
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, ARM64]
+
+    container:
+      image: autoware/model-zoo-tvm-cli:latest
+
+    steps:
+      - name: Install LFS
+        run: |
+          apt-get update
+          apt-get install git-lfs
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: tvm_cli test
+        run: |
+          git lfs pull
+          cp -r . /tmp
+          cd /tmp
+          ./scripts/tvm_cli/tvm_cli.py test

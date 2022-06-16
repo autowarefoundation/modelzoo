@@ -1,24 +1,26 @@
-name: Compilation push on master
+name: Models compile and upload
 
 on:
-  push:
-    branches:
-      - master
-    paths:
-      - 'scripts/tvm_cli/**'
-      - '**.onnx'
-      - '**.pb'
-      - '.github/workflows/compilation-push-master.yaml'
+  workflow_call:
+    inputs:
+      tag_name:
+        required: false
+        default: 'latest'
+        type: string
+    secrets:
+      MODELZOO_S3_ID:
+        required: true
+      MODELZOO_S3_KEY:
+        required: true
 
 jobs:
   compile-push-bucket:
-    if: github.repository_owner == 'autowarefoundation'
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, ARM64]
+    runs-on: ${{ matrix.os }}
     container:
-      image: autoware/model-zoo-tvm-cli:bleedingedge
+      image: autoware/model-zoo-tvm-cli:${{ inputs.tag_name }}
     steps:
       - name: Install LFS
         run: |
@@ -26,7 +28,7 @@ jobs:
           apt-get install git-lfs
 
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           lfs: true
 

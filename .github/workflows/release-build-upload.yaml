@@ -1,0 +1,22 @@
+name: Tagged build and upload
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  docker-build-push:
+    if: github.repository_owner == 'autowarefoundation'
+    uses: ./.github/workflows/reusable-build-upload-docker.yaml
+    with:
+      tag_name: ${{ github.ref_name }}
+    secrets: inherit
+
+  docker-arch-bundle:
+    if: github.repository_owner == 'autowarefoundation'
+    needs: docker-build-push
+    uses: ./.github/workflows/reusable-bundle-docker.yaml
+    with:
+      tag_name: ${{ github.ref_name }}
+    secrets: inherit
