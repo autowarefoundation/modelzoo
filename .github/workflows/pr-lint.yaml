@@ -58,3 +58,11 @@ jobs:
       - name: Check failures
         if: steps.python.outcome != 'success' || steps.cpp.outcome != 'success' || steps.dockerfile.outcome != 'success' || steps.shell.outcome != 'success'
         run: exit 1
+
+  test:
+    runs-on: ARM64
+    steps:
+      - name: Test
+        run: |
+          df
+          docker system df -v
