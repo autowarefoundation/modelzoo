@@ -7,6 +7,10 @@ on:
         required: false
         default: 'latest'
         type: string
+      version_name:
+        required: false
+        default: 'latest'
+        type: string
     secrets:
       MODELZOO_S3_ID:
         required: true
@@ -41,10 +45,12 @@ jobs:
         run: |
           cp -r . /tmp
           cd /tmp
+          rm -rf neural_networks/
           ./scripts/tvm_cli/tvm_cli.py test
-          tar -C /tmp/neural_networks/`uname -m` \
-            -czf networks-`uname -m`.tar.gz .
-          md5sum networks-`uname -m`.tar.gz | cut -d ' ' -f 1 >> networks-`uname -m`.md5
+          find neural_networks/ -maxdepth 1 -mindepth 1 -type d -execdir tar -C {} -czf {}-${{ inputs.version_name }}.tar.gz . \;
+          find neural_networks/ -maxdepth 1 -mindepth 1 -type d -execdir bash -c 'md5sum "$1".tar.gz | cut -d ' ' -f 1 > "$1.md5"' _ {}-${{ inputs.version_name }} \;
+          find neural_networks/ -maxdepth 1 -mindepth 1 -type d -execdir bash -c 'basename "$1" >> index-$(uname -m)' _ {} \;
+          sort -o neural_networks/index-$(uname -m) neural_networks/index-$(uname -m)
           pip install --quiet --no-cache-dir awscli==1.19.98
           aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
           ${AWS_ACCESS_KEY_ID}
@@ -52,10 +58,11 @@ jobs:
           ${AWS_REGION}
           text
           EOF
-          aws s3 cp . s3://autoware-modelzoo/ \
+          aws s3 cp neural_networks/ s3://autoware-modelzoo/models/${{ inputs.version_name }}/ \
             --recursive --exclude "*" \
-            --include "networks-`uname -m`.tar.gz" \
-            --include "networks-`uname -m`.md5" \
+            --include "*.tar.gz" \
+            --include "*.md5" \
+            --include "index-*" \
             --profile s3-sync-action --acl public-read
           aws configure --profile s3-sync-action <<-EOF > /dev/null 2>&1
           null

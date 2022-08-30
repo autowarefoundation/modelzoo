@@ -20,3 +20,31 @@ jobs:
     with:
       tag_name: ${{ github.ref_name }}
     secrets: inherit
+
+  get-vars:
+    if: github.repository_owner == 'autowarefoundation'
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.get_date.outputs.date }}
+      tag_lower: ${{ steps.get_tag.outputs.tag_lower }}
+    steps:
+      - name: Get date
+        id: get_date
+        run: |
+          DATE=`date +%Y%m%d`
+          echo ::set-output name=date::$DATE
+
+      - name: Get tag
+        id: get_tag
+        run: |
+          TAG_LOWER=`echo ${{ github.ref_name }} | cut -d . -f 3`
+          echo ::set-output name=tag_lower::$TAG_LOWER
+
+  compile-push-models:
+    if: github.repository_owner == 'autowarefoundation' && needs.get-vars.outputs.tag_lower == "0"
+    needs: [get-vars, docker-arch-bundle]
+    uses: ./.github/workflows/reusable-compile-upload-models.yaml
+    with:
+      tag_name: ${{ github.ref_name }}
+      version_name: ${{ github.ref_name }}-${{ needs.get-vars.outputs.date }}
+    secrets: inherit
