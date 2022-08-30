@@ -41,7 +41,7 @@ jobs:
           echo ::set-output name=tag_lower::$TAG_LOWER
 
   compile-push-models:
-    if: github.repository_owner == 'autowarefoundation' && needs.get-vars.outputs.tag_lower == "0"
+    if: github.repository_owner == 'autowarefoundation' && needs.get-vars.outputs.tag_lower == '0'
     needs: [get-vars, docker-arch-bundle]
     uses: ./.github/workflows/reusable-compile-upload-models.yaml
     with:
