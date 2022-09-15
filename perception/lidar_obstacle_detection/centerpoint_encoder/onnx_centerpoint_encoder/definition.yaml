@@ -6,7 +6,7 @@ network:
   provenance: https://github.com/open-mmlab/mmdetection3d
   training: Kitti 3D Object Dectection Evaluation 2017 Dataset
   model_license: Apache-2.0
-  data_license: Creative Commons BV-NC-SA 3.0
+  data_license: Creative Commons BY-NC-SA 3.0
 network_parameters:
   datatype: float32
   input_nodes:
