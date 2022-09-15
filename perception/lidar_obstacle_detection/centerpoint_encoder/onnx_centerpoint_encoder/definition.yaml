@@ -1,0 +1,25 @@
+version: 1
+enable_testing: true
+network:
+  filename: ./model_files/pts_voxel_encoder_centerpoint.onnx
+  framework: ONNX
+  provenance: https://github.com/open-mmlab/mmdetection3d
+  training: Kitti 3D Object Dectection Evaluation 2017 Dataset
+  model_license: Apache-2.0
+  data_license: Creative Commons BY-NC-SA 3.0
+network_parameters:
+  datatype: float32
+  input_nodes:
+    - name: input_features
+      description:
+      shape:
+        - 40000
+        - 32
+        - 9
+  output_nodes:
+    - name: pillar_features
+      description:
+      shape:
+        - 40000
+        - 1
+        - 32
