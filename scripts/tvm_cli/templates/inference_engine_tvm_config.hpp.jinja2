@@ -23,6 +23,12 @@ namespace {{ ns }}
 {%- endfor %}
 
 static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
+  {
+    {{ modelzoo_version[0] }},
+    {{ modelzoo_version[1] }},
+    {{ modelzoo_version[2] }}
+  },  // modelzoo_version
+
   "{{ network_name }}",  // network_name
   "{{ network_backend }}",  // network_backend
 
