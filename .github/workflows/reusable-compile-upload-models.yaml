@@ -43,8 +43,8 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
           AWS_REGION: us-east-2
         run: |
-          cp -r . /tmp
-          cd /tmp
+          cp -r . /tmp/modelzoo
+          cd /tmp/modelzoo
           rm -rf neural_networks/
           ./scripts/tvm_cli/tvm_cli.py test
           find neural_networks/ -maxdepth 1 -mindepth 1 -type d -execdir tar -C {} -czf {}-${{ inputs.version_name }}.tar.gz . \;
