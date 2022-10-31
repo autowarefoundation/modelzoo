@@ -43,6 +43,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
           AWS_REGION: us-east-2
         run: |
+          git lfs pull
           cp -r . /tmp/modelzoo
           cd /tmp/modelzoo
           rm -rf neural_networks/
