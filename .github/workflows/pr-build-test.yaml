@@ -76,6 +76,6 @@ jobs:
         run: |
           git config --global --add safe.directory $(pwd)
           git lfs pull
-          cp -r . /tmp
-          cd /tmp
+          cp -r . /tmp/modelzoo
+          cd /tmp/modelzoo
           ./scripts/tvm_cli/tvm_cli.py test

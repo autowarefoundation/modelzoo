@@ -15,7 +15,7 @@ from pathlib import Path
 import yaml
 import pytest
 
-MOUNT_PATH = '/tmp'
+MOUNT_PATH = path.abspath(path.dirname(__file__) + '/../../..')
 BACKENDS = ['llvm', 'vulkan']
 
 def run_tvm_cli(config_path, output_folder, extra_run_args):
