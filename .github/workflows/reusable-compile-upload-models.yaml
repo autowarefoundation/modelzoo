@@ -43,6 +43,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.MODELZOO_S3_KEY }}
           AWS_REGION: us-east-2
         run: |
+          git config --global --add safe.directory $(pwd)
           git lfs pull
           cp -r . /tmp/modelzoo
           cd /tmp/modelzoo
