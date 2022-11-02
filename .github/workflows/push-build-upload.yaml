@@ -9,6 +9,7 @@ on:
       - '**.onnx'
       - '**.pb'
       - '**/definition.yaml'
+      - './.github/workflows/reusable-compile-upload-models.yaml'
 
 jobs:
   build-push-docker:
