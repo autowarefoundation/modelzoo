@@ -10,18 +10,18 @@ network:
 network_parameters:
   datatype: float32
   input_nodes:
-    - name: input.1
+    - name: data
       description:
       shape:
         - 1
-        - 6
-        - 672
-        - 672
+        - 4
+        - 864
+        - 864
   output_nodes:
-    - name: 261
+    - name: deconv0
       description:
       shape:
         - 1
         - 12
-        - 672
-        - 672
+        - 864
+        - 864
