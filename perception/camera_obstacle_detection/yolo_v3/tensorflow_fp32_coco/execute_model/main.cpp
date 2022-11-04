@@ -1,4 +1,4 @@
-// Copyright 2021 Apex.AI, Inc.
+// Copyright 2021-2022 Arm Ltd., Apex.AI, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -162,6 +162,17 @@ void do_nms() {
 }
 
 int main(int argc, char const *argv[]) {
+    bool save_as_image = false;
+
+    if (argc == 2) {
+        save_as_image = true;
+    } else if (argc > 2) {
+        std::cerr << "Too many arguments have been provided. Please use "
+            << "only one argument to save the result of the pipeline as "
+            << "an image, or none to display it to an X11 window." << std::endl;
+        return 1;
+    }
+
     // load compiled functions
     tvm::runtime::Module mod =
         tvm::runtime::Module::LoadFromFile(network_module_path);
@@ -397,12 +408,22 @@ int main(int argc, char const *argv[]) {
                         cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(0, 255, 0), 1.5);
         }
     }
-    // show in a pop up window the detection results
-    cv::namedWindow(DISPLAY_WINDOW_NAME, cv::WINDOW_AUTOSIZE);
-    cv::imshow(DISPLAY_WINDOW_NAME, image);
 
-    // wait for user to close the window
-    cv::waitKey(0);
+    if (save_as_image) {
+        // save the detection results as an image
+        try {
+            cv::imwrite(argv[1], image);
+        } catch(cv::Exception& e) {
+            std::cerr << "An error has occurred while saving to file: " << e.err << std::endl;
+        }
+    } else {
+        // show in a pop up window the detection results
+        cv::namedWindow(DISPLAY_WINDOW_NAME, cv::WINDOW_AUTOSIZE);
+        cv::imshow(DISPLAY_WINDOW_NAME, image);
+
+        // wait for user to close the window
+        cv::waitKey(0);
+    }
 
     return 0;
 }
