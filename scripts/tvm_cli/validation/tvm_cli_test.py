@@ -16,7 +16,7 @@ import yaml
 import pytest
 
 MOUNT_PATH = path.abspath(path.dirname(__file__) + '/../../..')
-BACKENDS = ['llvm', 'vulkan']
+BACKENDS = ['llvm', 'vulkan', 'opencl']
 
 def run_tvm_cli(config_path, output_folder, extra_run_args):
     '''Execute tvm_cli and check the return code'''
