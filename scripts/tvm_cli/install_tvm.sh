@@ -1,5 +1,5 @@
 #! /usr/bin/env bash
-# Copyright 2020-2021 Autoware Foundation. All rights reserved.
+# Copyright 2020-2022 Autoware Foundation. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 
 set -e
 
-TVM_VERSION="v0.8"
+TVM_VERSION="v0.10.0"
 TVM_BASE_DIR="/tmp/tvm"
 TVM_BUILD_DIR="${TVM_BASE_DIR}/build"
 TVM_BUILD_CONFIG="${TVM_BUILD_DIR}/config.cmake"
@@ -64,11 +64,13 @@ fi
 rm -rf /var/lib/apt/lists/*
 python3 -m pip install --upgrade pip
 pip3 install mypy orderedset "antlr4-python3-runtime>=4.7,<4.8" \
-  psutil "xgboost>=1.2.0,<1.3.0" tornado cython
+  psutil "xgboost==1.5.*" tornado cython
 
 # clone tvm and create build directory
 git clone --branch ${TVM_VERSION} --recursive \
     https://github.com/apache/tvm ${TVM_BASE_DIR}
+# Apply bugfix from https://github.com/apache/tvm/pull/13341
+git -C ${TVM_BASE_DIR} cherry-pick a16a8904833e9c72aa7571ca336e781d89c128aa --no-commit
 mkdir -p ${TVM_BUILD_DIR}
 
 # copy a default configuration file

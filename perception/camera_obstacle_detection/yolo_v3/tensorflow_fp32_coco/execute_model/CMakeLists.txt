@@ -1,4 +1,4 @@
-# Copyright 2021 Apex.AI, Inc.
+# Copyright 2021-2022 Arm Ltd., Apex.AI, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 cmake_minimum_required(VERSION 3.0)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 project(execute_model)
 
