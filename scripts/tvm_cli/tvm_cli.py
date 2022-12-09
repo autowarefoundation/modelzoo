@@ -22,9 +22,10 @@ from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 from tvm.autotvm.graph_tuner import DPTuner, PBQPTuner
 from jinja2 import Environment, FileSystemLoader
 import pytest
-import tensorflow as tf
+# import tensorflow as tf
 import numpy as np
 
+OUTPUT_PREPROCESSING_MODULE_FILENAME = "preprocess.so"
 OUTPUT_NETWORK_MODULE_FILENAME = "deploy_lib.so"
 OUTPUT_NETWORK_GRAPH_FILENAME = "deploy_graph.json"
 OUTPUT_NETWORK_PARAM_FILENAME = "deploy_param.params"
@@ -74,29 +75,29 @@ def get_network(info):
     if info['model'].endswith('.onnx'):
         onnx_model = onnx.load(info['model'])
         mod, params = relay.frontend.from_onnx(onnx_model, info['input_dict'])
-    elif info['model'].endswith('.pb'):
-        with tf.compat.v1.Session() as sess:
-            with tf.io.gfile.GFile(info['model'], 'rb') as f:
-                graph_def = tf.compat.v1.GraphDef()
-                graph_def.ParseFromString(f.read())
-                input_map = {}
-                for index, (name, shape) in enumerate(
-                                                info['input_dict'].items()):
-                    tf_new_image = tf.compat.v1.placeholder(
-                        shape=[1 if x == -1 else x for x in shape],
-                        dtype=info['input_data_type'],
-                        name=name)
-                    input_map["input:"+str(index)] = tf_new_image
-                tf.import_graph_def(graph_def,
-                                    name='',
-                                    input_map = input_map)
-                graph_def = sess.graph.as_graph_def()
-                graph_def = tf_testing.ProcessGraphDefParam(graph_def)
-        input_shape_dict = {'DecodeJpeg/contents': info['input_list']}
-        mod, params = relay.frontend.from_tensorflow(
-            graph_def,
-            shape=input_shape_dict,
-            outputs=info['output_names'])
+    # elif info['model'].endswith('.pb'):
+    #     with tf.compat.v1.Session() as sess:
+    #         with tf.io.gfile.GFile(info['model'], 'rb') as f:
+    #             graph_def = tf.compat.v1.GraphDef()
+    #             graph_def.ParseFromString(f.read())
+    #             input_map = {}
+    #             for index, (name, shape) in enumerate(
+    #                                             info['input_dict'].items()):
+    #                 tf_new_image = tf.compat.v1.placeholder(
+    #                     shape=[1 if x == -1 else x for x in shape],
+    #                     dtype=info['input_data_type'],
+    #                     name=name)
+    #                 input_map["input:"+str(index)] = tf_new_image
+    #             tf.import_graph_def(graph_def,
+    #                                 name='',
+    #                                 input_map = input_map)
+    #             graph_def = sess.graph.as_graph_def()
+    #             graph_def = tf_testing.ProcessGraphDefParam(graph_def)
+    #     input_shape_dict = {'DecodeJpeg/contents': info['input_list']}
+    #     mod, params = relay.frontend.from_tensorflow(
+    #         graph_def,
+    #         shape=input_shape_dict,
+    #         outputs=info['output_names'])
     else:
         raise Exception('Model file format not supported')
 
