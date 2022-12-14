@@ -32,18 +32,13 @@ OUTPUT_NETWORK_PARAM_FILENAME = "deploy_param.params"
 OUTPUT_CONFIG_FILENAME = "inference_engine_tvm_config.hpp"
 OUTPUT_PREPROCESSING_CONFIG_FILENAME = "preprocessing_inference_engine_tvm_config.hpp"
 
-# TARGETS_DEVICES = {
-#     'llvm':'kDLCPU',
-#     'cuda':'kDLCUDA',
-#     'opencl':'kDLOpenCL',
-#     'vulkan':'kDLVulkan',
-# }
-# GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
-
 TARGETS_DEVICES = {
     'llvm':'kDLCPU',
+    'cuda':'kDLCUDA',
+    'opencl':'kDLOpenCL',
+    'vulkan':'kDLVulkan',
 }
-GPU_TARGETS = []
+GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
 
 def yaml_helper(info, yaml_dict, process, type_str):
     if type_str == 'input':
@@ -70,23 +65,19 @@ def yaml_helper(info, yaml_dict, process, type_str):
         input_elem = list_elem[idx]
         input_name = str(input_elem['name'])
         pre_input_dict[input_name] = {}
-        pre_input_dict[input_name]['shape'] = input_elem['shape']
-        pre_input_dict[input_name]['input_data_type'] = input_elem['datatype']
-        pre_input_dict[input_name]['lanes'] = 1
-        if pre_input_dict[input_name]['input_data_type'] == 'float32':
-            pre_input_dict[input_name]['dtype_code'] = 'kDLFloat'
-            pre_input_dict[input_name]['dtype_bits'] = 32
-        elif pre_input_dict[input_name]['input_data_type'] == 'int8':
-            pre_input_dict[input_name]['dtype_code'] = 'kDLInt'
-            pre_input_dict[input_name]['dtype_bits'] = 8
-        elif pre_input_dict[input_name]['input_data_type'] == 'int32':
-            pre_input_dict[input_name]['dtype_code'] = 'kDLInt'
-            pre_input_dict[input_name]['dtype_bits'] = 32
+        pre_input_dict[input_name] = input_elem['shape']
+        pre_input_list[idx]['lanes'] = 1
+        if input_elem['datatype'] == 'float32':
+            pre_input_list[idx]['dtype_code'] = 'kDLFloat'
+            pre_input_list[idx]['dtype_bits'] = 32
+        elif input_elem['datatype'] == 'int8':
+            pre_input_list[idx]['dtype_code'] = 'kDLInt'
+            pre_input_list[idx]['dtype_bits'] = 8
+        elif input_elem['datatype'] == 'int32':
+            pre_input_list[idx]['dtype_code'] = 'kDLInt'
+            pre_input_list[idx]['dtype_bits'] = 32
         else:
             raise Exception('Specified input data type not supported')
-        pre_input_list[idx]['dtype_code'] = pre_input_dict[input_name]['dtype_code']
-        pre_input_list[idx]['dtype_bits'] = pre_input_dict[input_name]['dtype_bits']
-        pre_input_list[idx]['lanes'] = pre_input_dict[input_name]['lanes']
 
 def yaml_processing(config, info):
     '''Utility function: definition.yaml file processing'''
@@ -323,7 +314,7 @@ def generate_config_file(info):
             namespace = info['namespace'],
             header_extension = info['header_extension'],
             modelzoo_version = info['modelzoo_version'],
-            network_name = info['preprocessing']['module_name'],
+            network_name = info['network_name'],
             network_backend = info['target'],
             network_module_path = path.join('.',
                                             OUTPUT_NETWORK_MODULE_FILENAME),
@@ -331,9 +322,6 @@ def generate_config_file(info):
                                         OUTPUT_NETWORK_GRAPH_FILENAME),
             network_params_path = path.join('.',
                                             OUTPUT_NETWORK_PARAM_FILENAME),
-            tvm_dtype_code = info['dtype_code'],
-            tvm_dtype_bits = info['dtype_bits'],
-            tvm_dtype_lanes = info['lanes'],
             tvm_device_type = info['device_type'],
             tvm_device_id = info['device_id'],
             input_list = info['input_list'],
@@ -348,7 +336,7 @@ def generate_config_file(info):
                 namespace = info['namespace'],
                 header_extension = info['header_extension'],
                 modelzoo_version = info['modelzoo_version'],
-                network_name = info['network_name'] + '_preprocessing',
+                network_name = info['network_name'] + '_' + info['preprocessing']['network_name'],
                 network_backend = info['target'],
                 network_module_path = path.join('.',
                                                 OUTPUT_PREPROCESSING_MODULE_FILENAME),
@@ -451,8 +439,8 @@ def tune_model(info):
         ]
         Tuner = DPTuner if use_DP else PBQPTuner
         executor = Tuner(graph,
-                         {name:[1 if x == -1 else x for x in shape['shape']]
-                          for (name,shape['shape']) in info['input_dict'].items()},
+                         {name:[1 if x == -1 else x for x in shape]
+                          for (name,shape) in info['input_dict'].items()},
                          records,
                          target_op,
                          info['target'])

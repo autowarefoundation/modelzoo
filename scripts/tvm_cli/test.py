@@ -33,23 +33,19 @@ def yaml_helper(info, yaml_dict, process, type_str):
         input_elem = list_elem[idx]
         input_name = str(input_elem['name'])
         pre_input_dict[input_name] = {}
-        pre_input_dict[input_name]['shape'] = input_elem['shape']
-        pre_input_dict[input_name]['input_data_type'] = input_elem['datatype']
-        pre_input_dict[input_name]['lanes'] = 1
-        if pre_input_dict[input_name]['input_data_type'] == 'float32':
-            pre_input_dict[input_name]['dtype_code'] = 'kDLFloat'
-            pre_input_dict[input_name]['dtype_bits'] = 32
-        elif pre_input_dict[input_name]['input_data_type'] == 'int8':
-            pre_input_dict[input_name]['dtype_code'] = 'kDLInt'
-            pre_input_dict[input_name]['dtype_bits'] = 8
-        elif pre_input_dict[input_name]['input_data_type'] == 'int32':
-            pre_input_dict[input_name]['dtype_code'] = 'kDLInt'
-            pre_input_dict[input_name]['dtype_bits'] = 32
+        pre_input_dict[input_name] = input_elem['shape']
+        pre_input_list[idx]['lanes'] = 1
+        if input_elem['datatype'] == 'float32':
+            pre_input_list[idx]['dtype_code'] = 'kDLFloat'
+            pre_input_list[idx]['dtype_bits'] = 32
+        elif input_elem['datatype'] == 'int8':
+            pre_input_list[idx]['dtype_code'] = 'kDLInt'
+            pre_input_list[idx]['dtype_bits'] = 8
+        elif input_elem['datatype'] == 'int32':
+            pre_input_list[idx]['dtype_code'] = 'kDLInt'
+            pre_input_list[idx]['dtype_bits'] = 32
         else:
             raise Exception('Specified input data type not supported')
-        pre_input_list[idx]['dtype_code'] = pre_input_dict[input_name]['dtype_code']
-        pre_input_list[idx]['dtype_bits'] = pre_input_dict[input_name]['dtype_bits']
-        pre_input_list[idx]['lanes'] = pre_input_dict[input_name]['lanes']
 
 def yaml_processing(config, info):
     '''Utility function: definition.yaml file processing'''
@@ -97,4 +93,5 @@ info = yaml_processing('/home/xinyuwang/adehome/modelzoo/perception/lidar_obstac
 print(info['input_dict'])
 print("\n")
 print(info['input_list'])
+print("\n")
 # print(info['output_list'])
