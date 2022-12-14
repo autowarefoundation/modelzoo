@@ -13,7 +13,7 @@ import subprocess
 import onnx
 import yaml
 import tvm
-# import tvm.relay.testing.tf as tf_testing
+import tvm.relay.testing.tf as tf_testing
 import tvm.contrib.graph_runtime as runtime
 from tvm import relay
 from tvm import autotvm
@@ -22,7 +22,7 @@ from tvm.autotvm.tuner import XGBTuner, GATuner, RandomTuner, GridSearchTuner
 from tvm.autotvm.graph_tuner import DPTuner, PBQPTuner
 from jinja2 import Environment, FileSystemLoader
 import pytest
-# import tensorflow as tf
+import tensorflow as tf
 import numpy as np
 
 OUTPUT_PREPROCESSING_MODULE_FILENAME = "preprocess.so"
@@ -88,28 +88,11 @@ def yaml_processing(config, info):
         if not info['model'].startswith('/'):
             yaml_file_dir = path.dirname(yml_file.name)
             info['model'] = path.join(yaml_file_dir, info['model'])
+        # Get list of input names and shapes from .yaml file
         yaml_helper(info, yaml_dict, '', 'input')
-        # # Get list of input names and shapes from .yaml file
-        # info['input_list'] = yaml_dict['network_parameters']['input_nodes']
-        # info['input_dict'] = {}                     # Used to compile the model
-        # for input_elem in info['input_list']:
-        #     info['input_dict'][str(input_elem['name'])] = input_elem['shape']
-        # # Get input data type
-        # info['input_data_type'] = yaml_dict['network_parameters']['datatype']
-        # if info['input_data_type'] == 'float32':
-        #     info['dtype_code'] = 'kDLFloat'
-        #     info['dtype_bits'] = 32
-        # elif info['input_data_type'] == 'int8':
-        #     info['dtype_code'] = 'kDLInt'
-        #     info['dtype_bits'] = 8
-        # else:
-        #     raise Exception('Specified input data type not supported')
         # Get list of output names and shapes from .yaml file
         yaml_helper(info, yaml_dict, '', 'output')
-        # info['output_list'] = yaml_dict['network_parameters']['output_nodes']
-        # info['output_names'] = []                   # Used to compile the model
-        # for output_elem in info['output_list']:
-        #     info['output_names'].append(str(output_elem['name']))
+
         if 'preprocessing' in yaml_dict:
             info['preprocessing'] = {}
             info['preprocessing']['network_name'] = yaml_dict['preprocessing']['module_name']
@@ -125,29 +108,29 @@ def get_network(info):
     if info['model'].endswith('.onnx'):
         onnx_model = onnx.load(info['model'])
         mod, params = relay.frontend.from_onnx(onnx_model, info['input_dict'])
-    # elif info['model'].endswith('.pb'):
-    #     with tf.compat.v1.Session() as sess:
-    #         with tf.io.gfile.GFile(info['model'], 'rb') as f:
-    #             graph_def = tf.compat.v1.GraphDef()
-    #             graph_def.ParseFromString(f.read())
-    #             input_map = {}
-    #             for index, (name, shape) in enumerate(
-    #                                             info['input_dict'].items()):
-    #                 tf_new_image = tf.compat.v1.placeholder(
-    #                     shape=[1 if x == -1 else x for x in shape],
-    #                     dtype=info['input_data_type'],
-    #                     name=name)
-    #                 input_map["input:"+str(index)] = tf_new_image
-    #             tf.import_graph_def(graph_def,
-    #                                 name='',
-    #                                 input_map = input_map)
-    #             graph_def = sess.graph.as_graph_def()
-    #             graph_def = tf_testing.ProcessGraphDefParam(graph_def)
-    #     input_shape_dict = {'DecodeJpeg/contents': info['input_list']}
-    #     mod, params = relay.frontend.from_tensorflow(
-    #         graph_def,
-    #         shape=input_shape_dict,
-    #         outputs=info['output_dict'].keys())
+    elif info['model'].endswith('.pb'):
+        with tf.compat.v1.Session() as sess:
+            with tf.io.gfile.GFile(info['model'], 'rb') as f:
+                graph_def = tf.compat.v1.GraphDef()
+                graph_def.ParseFromString(f.read())
+                input_map = {}
+                for index, (name, shape) in enumerate(
+                                                info['input_dict'].items()):
+                    tf_new_image = tf.compat.v1.placeholder(
+                        shape=[1 if x == -1 else x for x in shape],
+                        dtype=info['input_data_type'],
+                        name=name)
+                    input_map["input:"+str(index)] = tf_new_image
+                tf.import_graph_def(graph_def,
+                                    name='',
+                                    input_map = input_map)
+                graph_def = sess.graph.as_graph_def()
+                graph_def = tf_testing.ProcessGraphDefParam(graph_def)
+        input_shape_dict = {'DecodeJpeg/contents': info['input_list']}
+        mod, params = relay.frontend.from_tensorflow(
+            graph_def,
+            shape=input_shape_dict,
+            outputs=info['output_dict'].keys())
     else:
         raise Exception('Model file format not supported')
 
