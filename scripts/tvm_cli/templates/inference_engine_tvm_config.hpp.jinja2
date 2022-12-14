@@ -36,22 +36,18 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
   "{{ network_graph_path }}",  // network_graph_path
   "{{ network_params_path }}",  // network_params_path
 
-  {{ tvm_dtype_code }},  // tvm_dtype_code
-  {{ tvm_dtype_bits }},  // tvm_dtype_bits
-  {{ tvm_dtype_lanes }},  // tvm_dtype_lanes
-
   {{ tvm_device_type }},  // tvm_device_type
   {{ tvm_device_id }},  // tvm_device_id
 
   {
   {%- for node in input_list %}
-    {"{{ node['name'] }}", {{ '{' }}{{ node['shape']|join(', ') }}{{ '}}' }}{{ ',' if not loop.last }}
+    {"{{ node['name'] }}", {{ node['dtype_code'] }}, {{ node['dtype_bits'] }}, {{ node['lanes'] }}, {{ '{' }}{{ node['shape']|join(', ') }}{{ '}}' }}{{ ',' if not loop.last }}
   {%- endfor %}
   },  // network_inputs
 
   {
   {%- for node in output_list %}
-    {"{{ node['name'] }}", {{ '{' }}{{ node['shape']|join(', ') }}{{ '}}' }}{{ ',' if not loop.last }}
+    {"{{ node['name'] }}", {{ node['dtype_code'] }}, {{ node['dtype_bits'] }}, {{ node['lanes'] }}, {{ '{' }}{{ node['shape']|join(', ') }}{{ '}}' }}{{ ',' if not loop.last }}
   {%- endfor %}
   }  // network_outputs
 };

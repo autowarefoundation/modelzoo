@@ -8,10 +8,10 @@ network:
   model_license: Apache-2.0
   data_license: Creative Commons BY-NC-SA 3.0
 network_parameters:
-  datatype: float32
   input_nodes:
     - name: input.1
       description:
+      datatype: float32
       shape:
         - 1
         - 64
@@ -20,6 +20,7 @@ network_parameters:
   output_nodes:
     - name: 184
       description:
+      datatype: float32
       shape:
         - 1
         - 248
@@ -27,6 +28,7 @@ network_parameters:
         - 14
     - name: 185
       description:
+      datatype: float32
       shape:
         - 1
         - 248
@@ -34,6 +36,7 @@ network_parameters:
         - 2
     - name: 187
       description:
+      datatype: float32
       shape:
         - 1
         - 248
