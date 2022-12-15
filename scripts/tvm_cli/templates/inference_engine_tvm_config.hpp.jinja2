@@ -15,8 +15,8 @@
 
 #include "tvm_utility/pipeline{{ header_extension }}"
 
-#ifndef {{ network_name.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
-#define {{ network_name.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_
+#ifndef {{ network_header.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#define {{ network_header.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_
 {% for ns in namespace %}
 namespace {{ ns }}
 {
@@ -54,4 +54,4 @@ static const tvm_utility::pipeline::InferenceEngineTVMConfig config {
 {% for ns in namespace|reverse %}
 }  // namespace {{ ns }}
 {%- endfor %}
-#endif  // {{ network_name.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
+#endif  // {{ network_header.upper() }}_INFERENCE_ENGINE_TVM_CONFIG_HPP_  // NOLINT
