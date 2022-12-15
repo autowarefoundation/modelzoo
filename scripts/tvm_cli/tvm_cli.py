@@ -67,6 +67,7 @@ def yaml_helper(info, yaml_dict, process, type_str):
         pre_input_dict[input_name] = {}
         pre_input_dict[input_name] = input_elem['shape']
         pre_input_list[idx]['lanes'] = 1
+        pre_input_list[idx]['datatype'] = input_elem['datatype']
         if input_elem['datatype'] == 'float32':
             pre_input_list[idx]['dtype_code'] = 'kDLFloat'
             pre_input_list[idx]['dtype_bits'] = 32
@@ -118,7 +119,7 @@ def get_network(info):
                                                 info['input_dict'].items()):
                     tf_new_image = tf.compat.v1.placeholder(
                         shape=[1 if x == -1 else x for x in shape],
-                        dtype=info['input_data_type'],
+                        dtype=info['input_list'][index]['datatype'],
                         name=name)
                     input_map["input:"+str(index)] = tf_new_image
                 tf.import_graph_def(graph_def,
@@ -275,8 +276,10 @@ def compile_preprocessing_lib(info):
         spec = importlib.util.spec_from_file_location("preprocessing", info['preprocessing']['module'])   
         module = importlib.util.module_from_spec(spec)       
         spec.loader.exec_module(module)
-
-        rt_lib = tvm.build(module.PreprocessingModule, target=info['target'])
+        if info['target'] in GPU_TARGETS:
+            rt_lib = tvm.build(module.PreprocessingModuleGPU, target=info['target'])
+        else:
+            rt_lib = tvm.build(module.PreprocessingModuleCPU, target=info['target'])
         output_preprocessing_path = path.join(info['output_path'],
                                     OUTPUT_PREPROCESSING_MODULE_FILENAME)
         rt_lib.export_library(output_preprocessing_path)
@@ -302,7 +305,7 @@ def generate_config_file(info):
             network_module_path = path.join('.',
                                             OUTPUT_NETWORK_MODULE_FILENAME),
             network_graph_path = path.join('.',
-                                        OUTPUT_NETWORK_GRAPH_FILENAME),
+                                            OUTPUT_NETWORK_GRAPH_FILENAME),
             network_params_path = path.join('.',
                                             OUTPUT_NETWORK_PARAM_FILENAME),
             tvm_device_type = info['device_type'],
@@ -484,12 +487,12 @@ def tune_model(info):
             elif info['target'].startswith('llvm'):
                 ctx = tvm.cpu()
             module = runtime.GraphModule(lib["default"](ctx))
-            for name, value in info['input_dict'].items():
-                shape = value['shape']
+            for index, (name, shape) in enumerate(info['input_dict'].items()):
+                shape = name['shape']
                 data_tvm = tvm.nd.array(
                     (np.random.uniform(
                         size=[1 if x == -1 else x for x in shape]))
-                    .astype(info['input_data_type']))
+                    .astype(info['input_list'][index]['datatype']))
                 module.set_input(name, data_tvm)
 
             # evaluate
