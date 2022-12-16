@@ -41,6 +41,9 @@ TARGETS_DEVICES = {
 GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
 
 def yaml_helper(info, yaml_dict, process, type_str):
+    '''
+    This function handles input output parsing
+    '''
     if type_str == 'input':
         list_name = 'input_list'
         dict_name = 'input_dict'
@@ -61,8 +64,7 @@ def yaml_helper(info, yaml_dict, process, type_str):
         info[process][dict_name] = {}
         pre_input_dict = info[process][dict_name]
         pre_input_list = info[process][list_name]
-    for idx in range(len(list_elem)):
-        input_elem = list_elem[idx]
+    for idx, input_elem in enumerate(list_elem):
         input_name = str(input_elem['name'])
         pre_input_dict[input_name] = {}
         pre_input_dict[input_name] = input_elem['shape']
@@ -98,7 +100,8 @@ def yaml_processing(config, info):
             info['preprocessing'] = {}
             info['preprocessing']['network_name'] = yaml_dict['preprocessing']['module_name']
             yaml_file_dir = path.dirname(yml_file.name)
-            info['preprocessing']['module'] = path.join(yaml_file_dir, yaml_dict['preprocessing']['module'])
+            info['preprocessing']['module'] = path.join(yaml_file_dir,
+                                                        yaml_dict['preprocessing']['module'])
             yaml_helper(info, yaml_dict, 'preprocessing', 'input')
             yaml_helper(info, yaml_dict, 'preprocessing', 'output')
 
@@ -272,9 +275,13 @@ def compile_model(info):
         param_file.write(relay.save_param_dict(params))
 
 def compile_preprocessing_lib(info):
+    '''
+    This function compiles preprocessing module
+    '''
     if 'preprocessing' in info:
-        spec = importlib.util.spec_from_file_location("preprocessing", info['preprocessing']['module'])   
-        module = importlib.util.module_from_spec(spec)       
+        spec = importlib.util.spec_from_file_location("preprocessing",
+                                                      info['preprocessing']['module'])
+        module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         if info['target'] in GPU_TARGETS:
             rt_lib = tvm.build(module.PreprocessingModuleGPU, target=info['target'])
@@ -314,7 +321,7 @@ def generate_config_file(info):
             input_list = info['input_list'],
             output_list = info['output_list']
         ))
-    
+
     if 'preprocessing' in info:
         filename = path.join(info['output_path'], OUTPUT_PREPROCESSING_CONFIG_FILENAME)
         print('Writing pipeline configuration to', filename)
