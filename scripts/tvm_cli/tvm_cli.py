@@ -339,8 +339,8 @@ def generate_config_file(info):
                 network_params_path = './',
                 tvm_device_type = info['device_type'],
                 tvm_device_id = info['device_id'],
-                input_list = info['input_list'],
-                output_list = info['output_list']
+                input_list = info['preprocessing']['input_list'],
+                output_list = info['preprocessing']['output_list']
             ))
 
 def tuning_preprocess(args):
