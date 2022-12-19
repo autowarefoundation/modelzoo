@@ -8,10 +8,10 @@ network:
   model_license: Apache-2.0
   data_license: CC-BY-4.0
 network_parameters:
-  datatype: float32
   input_nodes:
     - name: input
       description: Camera Image RGB
+      datatype: float32
       shape:
         - 1
         - 416
@@ -20,6 +20,7 @@ network_parameters:
   output_nodes:
     - name: conv2d_58
       description:
+      datatype: float32
       shape:
         - 1
         - 13
@@ -28,6 +29,7 @@ network_parameters:
     
     - name: conv2d_66
       description:
+      datatype: float32
       shape:
         - 1
         - 26
@@ -36,6 +38,7 @@ network_parameters:
 
     - name: conv2d_74
       description:
+      datatype: float32
       shape:
         - 1
         - 52

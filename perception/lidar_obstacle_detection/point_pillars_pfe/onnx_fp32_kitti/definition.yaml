@@ -8,10 +8,10 @@ network:
   model_license: Apache-2.0
   data_license: Creative Commons BY-NC-SA 3.0
 network_parameters:
-  datatype: float32
   input_nodes:
     - name: pillar_x
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -19,6 +19,7 @@ network_parameters:
         - 100
     - name: pillar_y
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -26,6 +27,7 @@ network_parameters:
         - 100
     - name: pillar_z
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -33,6 +35,7 @@ network_parameters:
         - 100
     - name: pillar_i
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -40,11 +43,13 @@ network_parameters:
         - 100
     - name: num_points_per_pillar
       description:
+      datatype: float32
       shape:
         - 1
         - 12000
     - name: x_sub_shaped
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -52,6 +57,7 @@ network_parameters:
         - 100
     - name: y_sub_shaped
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -59,6 +65,7 @@ network_parameters:
         - 100
     - name: mask
       description:
+      datatype: float32
       shape:
         - 1
         - 1
@@ -67,6 +74,7 @@ network_parameters:
   output_nodes:
     - name: 174
       description:
+      datatype: float32
       shape:
         - 1
         - 64

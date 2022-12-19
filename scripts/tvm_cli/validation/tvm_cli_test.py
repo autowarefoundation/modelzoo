@@ -6,11 +6,9 @@
 #
 
 import os
-import shutil
 import subprocess
 from glob import glob
 from os import path
-import tempfile
 from pathlib import Path
 import yaml
 import pytest
@@ -65,20 +63,3 @@ def test_tvm_cli(backend, network_name):
     config_path = networks_to_compile[network_name]
     extra_run_args = ['--target', backend]
     run_tvm_cli(config_path, output_folder, extra_run_args)
-
-# Parameterizing the test_tvm_cli function, we generate separate tests for
-# every .yaml file.
-@pytest.mark.skipif(os.uname().machine == 'aarch64',
-                    reason='would cross-compile to itself')
-@pytest.mark.parametrize('network_name', list(networks_to_compile))
-def test_tvm_cli_cross_compile(network_name):
-    '''Executes a cross compilation test for each network'''
-    # Create a directory for every model
-    output_folder = tempfile.mkdtemp()
-
-    config_path = networks_to_compile[network_name]
-    extra_run_args = ['--cross_compile']
-    run_tvm_cli(config_path, output_folder, extra_run_args)
-
-    # Delete the output folder
-    shutil.rmtree(output_folder)

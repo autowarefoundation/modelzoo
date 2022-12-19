@@ -8,10 +8,10 @@ network:
   model_license: Apache-2.0
   data_license: Creative Commons BY-NC-SA 4.0
 network_parameters:
-  datatype: float32
   input_nodes:
     - name: data
       description:
+      datatype: float32
       shape:
         - 1
         - 4
@@ -20,6 +20,7 @@ network_parameters:
   output_nodes:
     - name: deconv0
       description:
+      datatype: float32
       shape:
         - 1
         - 12
