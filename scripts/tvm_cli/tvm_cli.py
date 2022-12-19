@@ -43,6 +43,12 @@ GPU_TARGETS = ['cuda', 'opencl', 'vulkan']
 def yaml_helper(info, yaml_dict, process, type_str):
     '''
     This function handles input output parsing
+
+    Keyword arguments:
+    info -- output dict
+    yaml_dict -- yaml returned dict
+    process -- '' for network, 'preprocessing' for preprocessing modules
+    type_str -- 'input' or 'output'
     '''
     if type_str == 'input':
         list_name = 'input_list'
