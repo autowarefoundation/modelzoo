@@ -333,7 +333,7 @@ def generate_config_file(info):
         print('Writing pipeline configuration to', filename)
         with open(filename, 'w', encoding='utf-8') as fh:
             fh.write(template.render(
-                namespace = info['namespace'],
+                namespace = info['namespace'] + '/preprocessing',
                 header_extension = info['header_extension'],
                 modelzoo_version = info['modelzoo_version'],
                 network_name = info['network_name'],
